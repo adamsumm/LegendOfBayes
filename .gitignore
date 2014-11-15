@@ -7,10 +7,6 @@
 *.sln.docstates
 
 # Build results
-[Dd]ebug/
-[Dd]ebugPublic/
-[Rr]elease/
-[Rr]eleases/
 x64/
 x86/
 build/
@@ -58,6 +54,9 @@ dlldata.c
 *.pidb
 *.svclog
 *.scc
+*.exe
+*.exe.config
+*.exe.manifest
 
 # Chutzpah Test files
 _Chutzpah*
