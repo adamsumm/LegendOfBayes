@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,11 +19,18 @@ namespace ZeldaInfer
     class Program
     {
         #region Tutorials
+        protected static Variable<bool> Foo(Variable<bool> coin1, Variable<bool> coin2)
+        {
+
+           return coin1 & coin2;
+        }
         protected static void Tutorial1()
         {
-            Variable<bool> coin1 = Variable.Bernoulli(0.5);
+            ArrayList parms = new ArrayList();
+            parms.Add(new VariableParameter("Beta",new object[2]{5,1}));
+            Variable<bool> coin1 = (Variable<bool>)GetRandomVariable("Bernoulli", GetParameters(parms));//(Variable<bool>) typeof(Variable).GetMethod("Bernoulli",new Type[1]{typeof(double)}).Invoke(null,new object[1]{0.5});//Variable.Bernoulli(0.5);
             Variable<bool> coin2 = Variable.Bernoulli(0.5);
-            Variable<bool> bothHeads = coin1 & coin2;
+            Variable<bool> bothHeads = Foo(coin1, coin2);//coin1 & coin2;
             InferenceEngine ie = new InferenceEngine();
             Console.WriteLine("Probability both coins are heads: " + ie.Infer(bothHeads));
             bothHeads.ObservedValue = false;
@@ -126,7 +134,12 @@ namespace ZeldaInfer
             using (Variable.If(isEffective))
             {
                 // Model if treatment is effective
-                probIfControl = Variable.Beta(1, 1);
+                ArrayList parms = new ArrayList();
+                parms.Add(new FixedParameter(1));
+                parms.Add(new FixedParameter(1));
+                //parms.Add(new VariableParameter("Beta", new object[2] { 5, 1 }));
+               // Variable<bool> coin1 = (Variable<bool>)GetRandomVariable("Bernoulli", GetParameters(parms));
+                probIfControl = (Variable<double>)GetRandomVariable("Beta", GetParameters(parms));//Variable.Beta(1, 1);
                 controlGroup[i] = Variable.Bernoulli(probIfControl).ForEach(i);
                 probIfTreated = Variable.Beta(1, 1);
                 treatedGroup[j] = Variable.Bernoulli(probIfTreated).ForEach(j);
@@ -297,19 +310,21 @@ namespace ZeldaInfer
             Variable<double> sprinklerNoRain = Variable.Beta(7, 1).Named("sprinklerNoRain");
             Variable<double> sprinklerRain = Variable.Beta(6, 1).Named("sprinklerRain");
             VariableArray<bool> sprinkler = Variable.Array<bool>(dataRange).Named("sprinkler");
-          
+
             using (Variable.ForEach(dataRange))
             {
-                using (Variable.If(rain[dataRange]))
+                using (Variable.ForEach(dataRange))
                 {
-                    sprinkler[dataRange] = Variable.Bernoulli(sprinklerRain);
-                }
-                using (Variable.IfNot(rain[dataRange]))
-                {
-                    sprinkler[dataRange] = Variable.Bernoulli(sprinklerNoRain);
+                    using (Variable.If(rain[dataRange]))
+                    {
+                        sprinkler[dataRange] = Variable.Bernoulli(sprinklerRain);
+                    }
+                    using (Variable.IfNot(rain[dataRange]))
+                    {
+                        sprinkler[dataRange] = Variable.Bernoulli(sprinklerNoRain);
+                    }
                 }
             }
-
             Variable<double> grassRainSprinkler = Variable.Beta(2, 1).Named("grassRainSprinkler");
             Variable<double> grassNoRainSprinkler = Variable.Beta(3, 1).Named("grassNoRainSprinkler");
             Variable<double> grassRainNoSprinkler = Variable.Beta(4, 1).Named("grassRainNoSprinkler");
@@ -343,7 +358,6 @@ namespace ZeldaInfer
                 }
             }
             InferenceEngine engine = new InferenceEngine();
-
             grass.ObservedValue = grassData;
             sprinkler.ObservedValue = sprinklerData;
             rain.ObservedValue = rainData;
@@ -355,10 +369,318 @@ namespace ZeldaInfer
             Console.WriteLine(engine.Infer(grassNoRainSprinkler));
             Console.WriteLine(engine.Infer(grassNoRainNoSprinkler));
         }
+        static void NestedTested()
+        {
 
+            bool[] rainData = new bool[1000];
+            bool[] sprinklerData = new bool[1000];
+            bool[] grassData = new bool[1000];
+            int totalGrassWet = 0;
+            for (int i = 0; i < rainData.Length; i++)
+            {
+                rainData[i] = Rand.Double() < 0.1;
+                if (rainData[i])
+                {
+                    sprinklerData[i] = Rand.Double() < 0.1;
+                }
+                else
+                {
+                    sprinklerData[i] = Rand.Double() < 0.4;
+                }
+
+                if (rainData[i] || sprinklerData[i])
+                {
+                    totalGrassWet++;
+                    grassData[i] = Rand.Double() < 0.99;
+                }
+                else
+                {
+                    grassData[i] = Rand.Double() < 0.01;
+
+                }
+            }
+            Console.WriteLine("GrassWet " + totalGrassWet);
+            Range dataRange = new Range(grassData.Length).Named("n");
+
+            Variable<double> rainRate = Variable.Beta(8, 1).Named("rainRate");
+            VariableArray<bool> rain = Variable.Array<bool>(dataRange).Named("rain");
+            rain[dataRange] = Variable.Bernoulli(rainRate).ForEach(dataRange);
+
+            List<VariableArray<bool>> sprinklerParents = new List<VariableArray<bool>>();
+            sprinklerParents.Add(rain);
+            ArrayList parameters = new ArrayList();
+            parameters.Add(new VariableParameter("Beta", new object[2] { 8, 1 }));
+
+            VariableArray<bool> sprinkler = Variable.Array<bool>(dataRange).Named("sprinkler");
+  
+            ArrayList nodes = TestOn<bool>(ref sprinkler, dataRange, sprinklerParents, "Bernoulli", parameters, "sprinkler");
+         //   ArrayList nodes = TestOnFake(ref sprinkler, dataRange, sprinklerParents, "Bernoulli", parameters, "sprinkler");
+           
+
+            Variable<double> grassRainSprinkler = Variable.Beta(2, 1).Named("grassRainSprinkler");
+            Variable<double> grassNoRainSprinkler = Variable.Beta(3, 1).Named("grassNoRainSprinkler");
+            Variable<double> grassRainNoSprinkler = Variable.Beta(4, 1).Named("grassRainNoSprinkler");
+            Variable<double> grassNoRainNoSprinkler = Variable.Beta(5, 1).Named("grassNoRainNoSprinkler");
+            VariableArray<bool> grass = Variable.Array<bool>(dataRange).Named("grass");
+            using (Variable.ForEach(dataRange))
+            {
+                using (Variable.If(rain[dataRange]))
+                {
+                    using (Variable.If(sprinkler[dataRange]))
+                    {
+                        Variable<bool> temp = Variable.Bernoulli(grassRainSprinkler);
+                        grass[dataRange] = temp;
+                    }
+                    using (Variable.IfNot(sprinkler[dataRange]))
+                    {
+                        grass[dataRange] = Variable.Bernoulli(grassRainNoSprinkler);
+
+                    }
+                }
+                using (Variable.IfNot(rain[dataRange]))
+                {
+                    using (Variable.If(sprinkler[dataRange]))
+                    {
+                        grass[dataRange] = Variable.Bernoulli(grassNoRainSprinkler);
+
+                    }
+                    using (Variable.IfNot(sprinkler[dataRange]))
+                    {
+                        grass[dataRange] = Variable.Bernoulli(grassNoRainNoSprinkler);
+                    }
+                }
+            }
+            InferenceEngine engine = new InferenceEngine();
+            grass.ObservedValue = grassData;
+            sprinkler.ObservedValue = sprinklerData;
+            rain.ObservedValue = rainData;
+            Console.WriteLine(engine.Infer(rainRate));
+            Console.WriteLine(engine.Infer(grassRainSprinkler));
+            Console.WriteLine(engine.Infer(grassRainNoSprinkler));
+            Console.WriteLine(engine.Infer(grassNoRainSprinkler));
+            Console.WriteLine(engine.Infer(grassNoRainNoSprinkler));
+            foreach (Variable<double> var in nodes)
+            {
+                Console.WriteLine(engine.Infer(var));
+            }
+            Variable<double> condition = Variable.Beta(1, 1);
+           
+
+        }
+        public abstract class Parameter
+        {
+            abstract public object GetValue();
+        }
+        public class FixedParameter : Parameter
+        {
+            public object value;
+            public FixedParameter(object val){
+                value = val;
+            }
+            public override object GetValue()
+            {
+ 	            return value;
+            }
+        }
+        public class VariableParameter : Parameter
+        {
+            public string distributionType;
+            public object[] defaultParameters;
+
+            public VariableParameter(string dist, object[] defaultParms)
+            {
+                distributionType = dist;
+                defaultParameters = defaultParms;
+            }
+            public override object GetValue()
+            {
+                 return  GetRandomVariable(distributionType, defaultParameters);
+            }
+            public object GetVariable()
+            {
+                /*
+                Type[] argumentTypes = new Type[defaultParameters.Length];
+                for (int ii = 0; ii < defaultParameters.Length; ii++)
+                {
+                    argumentTypes[ii] = defaultParameters[ii].GetType();
+                }
+                return (Variable<T>)typeof(Variable).GetMethod(distributionType, new Type[] { typeof(double), typeof(double) }).Invoke(null, defaultParameters);
+                 * */
+                return  GetRandomVariable(distributionType, defaultParameters);
+            }
+        }
+        
+        static object GetRandomVariable(string distributionType, object[] defaultParameters)
+        {
+            Type[] argumentTypes = new Type[defaultParameters.Length];
+            for (int ii = 0; ii < defaultParameters.Length; ii++)
+            {
+                argumentTypes[ii] = defaultParameters[ii].GetType();
+            }
+            object returnVal = typeof(Variable).GetMethod(distributionType, argumentTypes).Invoke(null, defaultParameters);
+            return returnVal;
+        }
+        static object[] GetParameters(ArrayList parameters){
+            object[] objParameters = new object[parameters.Count];
+            for (int ii = 0; ii < parameters.Count; ii++){
+                objParameters[ii] = (parameters[ii] as Parameter).GetValue();
+               
+            }
+            return objParameters;
+        }
+
+        static ArrayList TestOn<T>(ref VariableArray<T> test,Range range, List<VariableArray<bool> > parents, string distribution, ArrayList parameters, string nameSoFar = "")
+        {
+            VariableArray<bool> condition = parents[0];
+            parents.RemoveAt(0);
+          //  Variable<double> varCopy = GetVariable<double>(distributionType, defaultParameters);//(Variable<T>)typeof(Variable).GetMethod(distributionType, new Type[]{typeof(double),typeof(double)}).Invoke(null, defaultParameters);//Activator.CreateInstance(variable.GetType(), defaultParameters);
+            ArrayList outputList = new ArrayList();
+            object[] parameterObjectsT = null;
+            Variable<T> randomVarT = null;
+            object[] parameterObjectsF = null;
+            Variable<T> randomVarF = null;
+            if (parents.Count == 0) {
+                parameterObjectsT = GetParameters(parameters);
+                foreach (object parameter in parameterObjectsT)
+                {
+                    Type type = parameter.GetType();
+                    if (parameter.GetType() == typeof(Variable<double>))
+                    {
+                        outputList.Add((parameter as Variable<double>).Named( nameSoFar + condition.Name));
+                    }
+                }
+                randomVarT = ((Variable<T>)GetRandomVariable(distribution, parameterObjectsT) as Variable<T>);
+                parameterObjectsF = GetParameters(parameters);
+                foreach (object parameter in parameterObjectsF)
+                {
+                    Type type = parameter.GetType();
+                    if (parameter.GetType() == typeof(Variable<double>))
+                    {
+                        outputList.Add((parameter as Variable<double>).Named(nameSoFar + "No" + condition.Name));
+                    }
+                }
+                randomVarF = ((Variable<T>)GetRandomVariable(distribution, parameterObjectsF) as Variable<T>);
+            }
+
+            using (Variable.ForEach(range))   {
+                using (Variable.If(condition[range]))  {
+                    if (parents.Count == 0) {
+                        test[range] = randomVarT;
+                    }
+                    else {
+                        outputList.AddRange(TestOnHelper<T>(ref test, range, parents, distribution, parameters, nameSoFar + condition.Name));
+                    }
+                }
+                using (Variable.IfNot(condition[range]))    {
+                    if (parents.Count == 0)
+                    {
+
+                        test[range] = randomVarF;
+                    }
+                    else {
+                        outputList.AddRange(TestOnHelper<T>(ref test, range, parents, distribution, parameters, nameSoFar + "No" + condition.Name));
+                    }
+                }
+            }
+            return outputList;
+        }
+        static ArrayList TestOnHelper<T>(ref VariableArray<T> test, Range range, List<VariableArray<bool>> parents, string distribution, ArrayList parameters, string nameSoFar = "")
+        {
+            VariableArray<bool> condition = parents[0];
+            parents.RemoveAt(0);
+            ArrayList outputList = new ArrayList();
+
+            using (Variable.If(condition[range]))
+            {
+                if (parents.Count == 0)
+                {
+                    object[] parameterObjects = GetParameters(parameters);
+                    foreach (object parameter in parameterObjects)
+                    {
+                        if (parameter.GetType() == typeof(Variable<double>))
+                        {
+                            outputList.Add((parameter as Variable<double>).Named(nameSoFar + condition.Name));
+                        }
+                    }
+                    test[range] = ((Variable<T>)GetRandomVariable(distribution, parameterObjects) as Variable<T>);
+                }
+                else
+                {
+                    outputList.AddRange(TestOnHelper<T>(ref test, range, parents, distribution, parameters, nameSoFar + condition.Name));
+                }
+            }
+            using (Variable.IfNot(condition[range]))
+            {
+                if (parents.Count == 0)
+                {
+                    object[] parameterObjects = GetParameters(parameters);
+                    foreach (object parameter in parameterObjects)
+                    {
+                        if (parameter.GetType() == typeof(Variable<double>))
+                        {
+                            outputList.Add((parameter as Variable<double>).Named(nameSoFar + "No" + condition.Name));
+                        }
+                    }
+                    test[range] = ((Variable<T>)GetRandomVariable(distribution, parameterObjects) as Variable<T>);
+                }
+                else
+                {
+                    outputList.AddRange(TestOnHelper<T>(ref test, range, parents, distribution, parameters, nameSoFar + "No" + condition.Name));
+                }
+            }
+            
+            return outputList;
+        }
+        static void ModelNetworkSprinkler() {
+            GraphicalModel model = new GraphicalModel();
+            Range C = new Range(2).Named("C");
+            Range S = new Range(2).Named("S");
+            Range R = new Range(2).Named("R");
+            Range W = new Range(2).Named("W");
+            ModelNode cloudy = new ModelNode("Cloudy", C);
+            ModelNode sprinkler = new ModelNode("Sprinkler", S);
+            ModelNode rain = new ModelNode("Rain", R);
+            ModelNode wet = new ModelNode("Wet", W);
+            model.AddNode(cloudy);
+            model.AddNode(sprinkler);
+            model.AddNode(rain);
+            model.AddNode(wet);
+            model.AddLink(cloudy, rain);
+            model.AddLink(cloudy, sprinkler);
+            model.AddLink(sprinkler, wet);
+            model.AddLink(rain, wet);
+            model.CreateNetwork();
+
+            //SAMPLE DATA
+
+            Vector probCloudy = Vector.FromArray(0.5, 0.5);
+            Vector[] cptSprinkler = new Vector[] { Vector.FromArray(0.1, 0.9) /* cloudy */, Vector.FromArray(0.5, 0.5) /* not cloudy */ };
+            Vector[] cptRain = new Vector[] { Vector.FromArray(0.8, 0.2) /* cloudy */, Vector.FromArray(0.2, 0.8) /* not cloudy */ };
+            Vector[][] cptWetGrass = new Vector[][]		    {
+			    new Vector[] { Vector.FromArray(0.99, 0.01) /* rain */,  Vector.FromArray(0.9, 0.1) /* not rain */}, // Sprinkler
+			    new Vector[] { Vector.FromArray(0.9, 0.1) /* rain */, Vector.FromArray(0.0, 1.0) /* not rain */}  // Not sprinkler
+		    };
+            int[][] sample = WetGlassSprinklerRainModel.Sample(1000, probCloudy, cptSprinkler, cptRain, cptWetGrass);
+      
+            Dictionary<string,int[]> observedData = new Dictionary<string,int[]>();
+            observedData.Add("Cloudy",sample[0]);
+            observedData.Add("Sprinkler",sample[1]);
+            observedData.Add("Rain",sample[2]);
+            observedData.Add("Wet",sample[3]);
+
+            //LEARN
+            model.LearnParameters(observedData);
+        }
         static void Main(string[] args)
         {
-            Sprinkler();
+        //    Sprinkler();
+     //       NestedTested();
+           WetGrassSprinklerRain test = new WetGrassSprinklerRain();
+
+           test.Run();
+        //    Tutorial5();
+            ModelNetworkSprinkler();
+            Console.WriteLine("ALL DONE :)");
             Console.Read(); 
         }
     }
