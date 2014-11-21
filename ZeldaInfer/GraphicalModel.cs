@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Xml.Linq;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using MicrosoftResearch.Infer.Models;
@@ -11,15 +13,38 @@ using MicrosoftResearch.Infer.Maths;
 
 namespace ZeldaInfer {
     public class GraphicalModel {
-        Dictionary<string, ModelNode> nodes;
-        Dictionary<string, ModelNode> independentNodes;
+        Dictionary<string, ModelNode> nodes = new Dictionary<string,ModelNode>();
+        Dictionary<string, ModelNode> independentNodes = new Dictionary<string,ModelNode>();
+        Dictionary<string, Tuple<string[], Range>> rangeCategories = new Dictionary<string,Tuple<string[],Range>>();
         public Variable<int> NumberOfExamples;
         public InferenceEngine Engine = new InferenceEngine();
-        public GraphicalModel() {
-            nodes = new Dictionary<string, ModelNode>();
-            independentNodes = new Dictionary<string, ModelNode>();
+        public GraphicalModel() {}
+        public GraphicalModel(string filename) {
+            XDocument xdoc = XDocument.Load(filename);
+            List<Tuple<string, string>> edges = new List<Tuple<string, string>>();
+            List<Tuple<string, string>> nodeParams = new List<Tuple<string, string>>();
+            foreach (var element in xdoc.Descendants()){
+                switch (element.Name.ToString()) {
+                    case "Category":
+                        string[] categeories = element.Attribute("categories").Value.Split(new char[1]{','});
+                        string name = element.Attribute("name").Value;
+                        rangeCategories[name] = new Tuple<string[], Range>(categeories, new Range(categeories.Length).Named(name));
+                        break;
+                    case "Edge":
+                        edges.Add(new Tuple<string, string>(element.Attribute("parent").Value, element.Attribute("child").Value));
+                        break;
+                    case "Node":
+                        nodeParams.Add(new Tuple<string, string>(element.Attribute("name").Value, element.Attribute("category").Value));
+                        break;
+                }
+            }
+            foreach (var node in nodeParams) {
+                AddNode(new ModelNode(node.Item1, rangeCategories[node.Item2].Item2));
+            }
+            foreach (var edge in edges) {
+                AddLink(nodes[edge.Item1], nodes[edge.Item2]);
+            }
         }
-
         public void AddNode(ModelNode node) {
             nodes[node.name] = node;
             independentNodes[node.name] = node;
@@ -69,57 +94,19 @@ namespace ZeldaInfer {
             NumberOfExamples.ObservedValue = numberOfEntries;
             foreach (ModelNode node in nodes.Values) {
                 node.distributions.Infer(Engine);
-                /*
-                switch (node.distributions.ParentCount()){
-                    case 0:
-                        Engine.Infer<Dirichlet>((node.distributions as NoParentNode).Probability);
-                        break;
-                    case 1:
-                        Engine.Infer<Dirichlet[]>((node.distributions as OneParentNode).CPT);
-                        break;
-                    case 2:
-                        Engine.Infer<Dirichlet[][]>((node.distributions as TwoParentNodes).CPT);
-                        break;
-                    case 3:
-                        Engine.Infer<Dirichlet[,][]>((node.distributions as ThreeParentNodes).CPT);
-                        break;
-                    case 4:
-                        Engine.Infer<Dirichlet[,,][]>((node.distributions as FourParentNodes).CPT);
-                        break;
-                    default:
-                        throw new ArgumentException("Nodes can only have up to 4 parents");
-                }    
-                 */
             }
             foreach (ModelNode node in nodes.Values) {
                 Console.WriteLine(node.distributions.PosteriorToString());
             }
         }
-        /*
-            int[] cloudy,
-            int[] sprinkler,
-            int[] rain,
-            int[] wetgrass,
-            Dirichlet probCloudyPrior,
-            Dirichlet[] cptSprinklerPrior,
-            Dirichlet[] cptRainPrior,
-            Dirichlet[][] cptWetGrassPrior
-            ) {
-            NumberOfExamples.ObservedValue = cloudy.Length;
-            Cloudy.ObservedValue = cloudy;
-            Sprinkler.ObservedValue = sprinkler;
-            Rain.ObservedValue = rain;
-            WetGrass.ObservedValue = wetgrass;
-            ProbCloudyPrior.ObservedValue = probCloudyPrior;
-            CPTSprinklerPrior.ObservedValue = cptSprinklerPrior;
-            CPTRainPrior.ObservedValue = cptRainPrior;
-            CPTWetGrassPrior.ObservedValue = cptWetGrassPrior;
-            // Inference
-            ProbCloudyPosterior = Engine.Infer<Dirichlet>(ProbCloudy);
-            CPTSprinklerPosterior = Engine.Infer<Dirichlet[]>(CPTSprinkler);
-            CPTRainPosterior = Engine.Infer<Dirichlet[]>(CPTRain);
-            CPTWetGrassPosterior = Engine.Infer<Dirichlet[][]>(CPTWetGrass);
+        public static Dictionary<string, int[]> LoadData(string filename) {
+            Dictionary<string, int[]> data = new Dictionary<string, int[]>();
+            XDocument xdoc = XDocument.Load(filename);
+            foreach (XElement element in xdoc.Root.Elements()) {
+                string[] stringData = element.Value.Split(',');
+                data[element.Attribute("name").Value] = Array.ConvertAll(stringData, int.Parse);
+            }
+            return data;
         }
-         * */
     }
 }

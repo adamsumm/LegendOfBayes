@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using MicrosoftResearch.Infer;
 using MicrosoftResearch.Infer.Collections;
 using MicrosoftResearch.Infer.Distributions;
@@ -632,6 +633,14 @@ namespace ZeldaInfer
             return outputList;
         }
         static void ModelNetworkSprinkler() {
+
+            /*
+             * C -> S
+             * 
+             * 
+             * 
+             * 
+             * */
             GraphicalModel model = new GraphicalModel();
             Range C = new Range(2).Named("C");
             Range S = new Range(2).Named("S");
@@ -671,15 +680,89 @@ namespace ZeldaInfer
             //LEARN
             model.LearnParameters(observedData);
         }
+
+        static void ModelNetworkSprinklerBeyond() {
+            
+            GraphicalModel model = new GraphicalModel();
+            Range C = new Range(2).Named("C");
+            Range S = new Range(2).Named("S");
+            Range R = new Range(2).Named("R");
+            Range W = new Range(2).Named("W");
+            ModelNode cloudy = new ModelNode("Cloudy", C);
+            ModelNode sprinkler = new ModelNode("Sprinkler", S);
+            ModelNode rain = new ModelNode("Rain", R);
+            ModelNode wet = new ModelNode("Wet", W);
+            model.AddNode(cloudy);
+            model.AddNode(sprinkler);
+            model.AddNode(rain);
+            model.AddNode(wet);
+            model.AddLink(cloudy, rain);
+            model.AddLink(cloudy, sprinkler);
+            model.AddLink(sprinkler, wet);
+            model.AddLink(rain, wet);
+            model.AddLink(cloudy, wet);
+            model.CreateNetwork();
+            
+            //SAMPLE DATA
+
+            Vector probCloudy = Vector.FromArray(0.5, 0.5);
+            Vector[] cptSprinkler = new Vector[] { Vector.FromArray(0.1, 0.9) /* cloudy */, Vector.FromArray(0.5, 0.5) /* not cloudy */ };
+            Vector[] cptRain = new Vector[] { Vector.FromArray(0.8, 0.2) /* cloudy */, Vector.FromArray(0.2, 0.8) /* not cloudy */ };
+            Vector[][] cptWetGrass = new Vector[][]		    {
+			    new Vector[] { Vector.FromArray(0.99, 0.01) /* rain */,  Vector.FromArray(0.9, 0.1) /* not rain */}, // Sprinkler
+			    new Vector[] { Vector.FromArray(0.9, 0.1) /* rain */, Vector.FromArray(0.0, 1.0) /* not rain */}  // Not sprinkler
+		    };
+            int[][] sample = WetGlassSprinklerRainModel.Sample(1000, probCloudy, cptSprinkler, cptRain, cptWetGrass);
+
+            Dictionary<string, int[]> observedData = new Dictionary<string, int[]>();
+            observedData.Add("Cloudy", sample[0]);
+            observedData.Add("Sprinkler", sample[1]);
+            observedData.Add("Rain", sample[2]);
+            observedData.Add("Wet", sample[3]);
+
+            //LEARN
+            model.LearnParameters(observedData);
+        }
+        static void ModelNetworkSprinklerFile() {
+
+            GraphicalModel model = new GraphicalModel("WetRainSprinkler.xml");
+            model.CreateNetwork();
+            Dictionary<string, int[]> observedData = GraphicalModel.LoadData("WetRainSprinklerData.xml");
+            model.LearnParameters(observedData);
+        }
+        static void WriteData() {
+
+            Vector probCloudy = Vector.FromArray(0.5, 0.5);
+            Vector[] cptSprinkler = new Vector[] { Vector.FromArray(0.1, 0.9) /* cloudy */, Vector.FromArray(0.5, 0.5) /* not cloudy */ };
+            Vector[] cptRain = new Vector[] { Vector.FromArray(0.8, 0.2) /* cloudy */, Vector.FromArray(0.2, 0.8) /* not cloudy */ };
+            Vector[][] cptWetGrass = new Vector[][]		    {
+			    new Vector[] { Vector.FromArray(0.99, 0.01) /* rain */,  Vector.FromArray(0.9, 0.1) /* not rain */}, // Sprinkler
+			    new Vector[] { Vector.FromArray(0.9, 0.1) /* rain */, Vector.FromArray(0.0, 1.0) /* not rain */}  // Not sprinkler
+		    };
+            int[][] sample = WetGlassSprinklerRainModel.Sample(1000, probCloudy, cptSprinkler, cptRain, cptWetGrass);
+            XElement Cloudy = new XElement("Data", string.Join(",", sample[0]));
+            Cloudy.SetAttributeValue("name", "Cloudy");
+            XElement Sprinkler = new XElement("Data", string.Join(",", sample[1]));
+            Sprinkler.SetAttributeValue("name", "Sprinkler");
+            XElement Rain = new XElement("Data", string.Join(",", sample[2]));
+            Rain.SetAttributeValue("name", "Rain");
+            XElement Wet = new XElement("Data", string.Join(",", sample[3]));
+            Wet.SetAttributeValue("name", "Wet");
+            XDocument dataDoc = new XDocument( new XElement("root",new XElement[]{Cloudy,Sprinkler,Rain,Wet}));
+            dataDoc.Save("WetRainSprinklerData.xml");
+        }
         static void Main(string[] args)
         {
         //    Sprinkler();
      //       NestedTested();
-           WetGrassSprinklerRain test = new WetGrassSprinklerRain();
+         //  WetGrassSprinklerRain test = new WetGrassSprinklerRain();
 
-           test.Run();
+          // test.Run();
         //    Tutorial5();
+          //  WriteData();
             ModelNetworkSprinkler();
+         //  ModelNetworkSprinklerBeyond();
+            ModelNetworkSprinklerFile();
             Console.WriteLine("ALL DONE :)");
             Console.Read(); 
         }
