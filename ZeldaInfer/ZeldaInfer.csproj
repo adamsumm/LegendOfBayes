@@ -65,9 +65,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Extensions.cs" />
     <Compile Include="GraphicalModel.cs" />
+    <Compile Include="PriorityQueue\HeapPriorityQueue.cs" />
+    <Compile Include="PriorityQueue\IPriorityQueue.cs" />
+    <Compile Include="LevelParse\Door.cs" />
+    <Compile Include="LevelParse\Dungeon.cs" />
+    <Compile Include="LevelParse\Room.cs" />
+    <Compile Include="LevelParse\SearchAgent.cs" />
     <Compile Include="ModelNode.cs" />
     <Compile Include="DistributionsNode.cs" />
+    <Compile Include="PriorityQueue\PriorityQueueNode.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">

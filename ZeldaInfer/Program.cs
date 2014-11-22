@@ -15,6 +15,8 @@ using MicrosoftResearch.Infer.Maths;
 using MicrosoftResearch.Infer.Transforms;
 using MicrosoftResearch.Infer.Utils;
 using MicrosoftResearch.Infer.Views;
+
+using ZeldaInfer.LevelParse;
 namespace ZeldaInfer
 {
     class Program
@@ -760,9 +762,17 @@ namespace ZeldaInfer
           // test.Run();
         //    Tutorial5();
           //  WriteData();
-            ModelNetworkSprinkler();
+        //  ModelNetworkSprinkler();
          //  ModelNetworkSprinklerBeyond();
-            ModelNetworkSprinklerFile();
+        
+            //ModelNetworkSprinklerFile();
+
+            Dungeon dungeon = new Dungeon("Levels/LttP 1.xml");
+            SearchAgent path = dungeon.getOptimalPath(true, 2);
+            dungeon.UpdateRooms(path.pathSoFar);
+            foreach (var room in path.pathSoFar) {
+                Console.WriteLine(room.type + ", " + room.id);
+            }
             Console.WriteLine("ALL DONE :)");
             Console.Read(); 
         }
