@@ -27,7 +27,8 @@ namespace ZeldaInfer.LevelParse {
                            int keyItems,
                            List<string> switchesSet,
                            Room currentRoom,
-                           List<SearchAgent> agentPath) {
+                           List<SearchAgent> agentPath,
+                           SortedSet<Room> visited) {
             this.pathSoFar = new List<Room>(pathSoFar);
             this.agentPath = new List<SearchAgent>(agentPath);
             this.agentPath.Add(this);
@@ -39,8 +40,9 @@ namespace ZeldaInfer.LevelParse {
             this.items = items;
             this.keyItems = keyItems;
             this.switchesSet = new List<string>(switchesSet);
-         //   if (!pathSoFar.Contains(currentRoom)) 
-            {
+            this.visited = new SortedSet<Room>(visited, new RoomComparer());
+            bool canAdd = true;
+            if (!visited.Contains(currentRoom)) {
                 if (currentRoom.type.Contains("k")) {
                     this.keysAcquired++;
                     this.gotItem = true;
@@ -53,21 +55,26 @@ namespace ZeldaInfer.LevelParse {
                     this.bigKey = true;
                     this.gotItem = true;
                 }
-                foreach (var type in currentRoom.type.Split(new char[]{' '})){
-                    if (type.Contains("S")){
+                foreach (var type in currentRoom.type.Split(new char[] { ' ' })) {
+                    if (type.Contains("S")) {
                         this.switchesSet.Add(type);
                         this.gotItem = true;
                     }
                 }
-                if (currentRoom.type.Contains("I")){
-                    if (!this.requiresBigKey || this.bigKey){
+                if (currentRoom.type.Contains("I")) {
+                    if (!this.requiresBigKey || this.bigKey) {
                         this.keyItems++;
                         this.gotItem = true;
                     }
+                    else {
+                        canAdd = false;
+                    }
                 }
             }
+            if (canAdd) {
+                this.visited.Add(currentRoom);
+            }
             this.pathSoFar.Add(currentRoom);
-            visited = new SortedSet<Room>(this.pathSoFar,new RoomComparer());
             this.currentRoom = currentRoom;
         }
         public override int GetHashCode() {
@@ -109,7 +116,10 @@ namespace ZeldaInfer.LevelParse {
             List<SearchAgent> children = new List<SearchAgent>();
 
             if (currentRoom.neighbors.Count == 1) {
-                children.Add(new SearchAgent(pathSoFar, keysAcquired,keysSpent, bigKey, requiresBigKey, items, keyItems, switchesSet, currentRoom.neighbors[0],agentPath));
+                children.Add(new SearchAgent(pathSoFar, keysAcquired,keysSpent, 
+                                             bigKey, requiresBigKey, 
+                                             items, keyItems,
+                                             switchesSet, currentRoom.neighbors[0],agentPath,visited));
             }
             else {
                 foreach (var door in currentRoom.doors) {
@@ -140,7 +150,10 @@ namespace ZeldaInfer.LevelParse {
                     if (keysAcquired-childKeysSpent < 0) {
                         continue;
                     }
-                    children.Add(new SearchAgent(pathSoFar, keysAcquired, childKeysSpent, bigKey, requiresBigKey, items, keyItems, switchesSet, otherRoom, agentPath));
+                    children.Add(new SearchAgent(pathSoFar, keysAcquired, childKeysSpent, 
+                                                 bigKey, requiresBigKey,
+                                                 items, keyItems, 
+                                                 switchesSet, otherRoom, agentPath,visited));
 
                 }
             }

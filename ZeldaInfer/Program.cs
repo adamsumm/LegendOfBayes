@@ -768,11 +768,10 @@ namespace ZeldaInfer
             //ModelNetworkSprinklerFile();
 
             Dungeon dungeon = new Dungeon("Levels/LttP 1.xml");
-            SearchAgent path = dungeon.getOptimalPath(true, 2);
+            SearchAgent path = dungeon.getOptimalPath(true, 1);
             dungeon.UpdateRooms(path.pathSoFar);
-            foreach (var room in path.pathSoFar) {
-                Console.WriteLine(room.type + ", " + room.id);
-            }
+            dungeon.WriteStats("LttP1Summary.xml", path);
+            Console.WriteLine(path.pathToString());
             Console.WriteLine("ALL DONE :)");
             Console.Read(); 
         }

@@ -96,7 +96,7 @@ namespace ZeldaInfer.LevelParse {
             HeapPriorityQueue<SearchAgent> openSet = new HeapPriorityQueue<SearchAgent>(80000);
             HashSet<SearchAgent> closedSet = new HashSet<SearchAgent>();
             Dictionary<int,double> gScore = new Dictionary<int,double>();
-            SearchAgent current = new SearchAgent(new List<Room>(), 0,0,false, requiresBigKey, 0, 0, new List<string>(), start,new List<SearchAgent>());
+            SearchAgent current = new SearchAgent(new List<Room>(), 0,0,false, requiresBigKey, 0, 0, new List<string>(), start,new List<SearchAgent>(), new SortedSet<Room>());
             gScore[current.GetHashCode()] = 0;
             openSet.Enqueue(current, 0);
 
@@ -137,6 +137,7 @@ namespace ZeldaInfer.LevelParse {
 			    if (optimalPath.Contains(room)){
 				    room.detour = 0;
 				    room.depth = optimalPath.IndexOf(room);
+                    room.crossingCount = optimalPath.Where(x => x.Equals(room)).Count();
                 }
 			    else {
                     notVisited.Add(room);
@@ -153,28 +154,9 @@ namespace ZeldaInfer.LevelParse {
         }
         public Tuple<int, Room> FloodFill(Room currentRoom, List<Room> goals) {
             
-		List<Room> visited = new List<Room>();
-		List<Tuple<int, Room>> toVisit = new List<Tuple<int, Room>>();
-		foreach (var door in currentRoom.doors){
-			Room room = door.OtherRoom(currentRoom);
-			if (door.OtherLock(currentRoom).Contains("1")){
-				continue;
-            }
-			if (door.lock1.Contains("s")){
-				continue;
-            }
-			if (goals.Contains(room)){
-				return new Tuple<int,Room>(1,room);
-            }
-			toVisit.Add(new Tuple<int,Room>(1,room));
-			visited.Add(room);
-        }
-		while (toVisit.Count > 0){
-			Tuple<int,Room> depthRoomTuple = toVisit[0];
-            toVisit.RemoveAt(0);
-			currentRoom = depthRoomTuple.Item2;
-			int depth = depthRoomTuple.Item1;
-			foreach (var door in currentRoom.doors){
+		    List<Room> visited = new List<Room>();
+		    List<Tuple<int, Room>> toVisit = new List<Tuple<int, Room>>();
+		    foreach (var door in currentRoom.doors){
 			    Room room = door.OtherRoom(currentRoom);
 			    if (door.OtherLock(currentRoom).Contains("1")){
 				    continue;
@@ -183,13 +165,179 @@ namespace ZeldaInfer.LevelParse {
 				    continue;
                 }
 			    if (goals.Contains(room)){
-				    return new Tuple<int,Room>(depth+1,room);
+				    return new Tuple<int,Room>(1,room);
                 }
-			    toVisit.Add(new Tuple<int,Room>(depth+1,room));
+			    toVisit.Add(new Tuple<int,Room>(1,room));
 			    visited.Add(room);
-            }			
+            }
+		    while (toVisit.Count > 0){
+			    Tuple<int,Room> depthRoomTuple = toVisit[0];
+                toVisit.RemoveAt(0);
+			    currentRoom = depthRoomTuple.Item2;
+			    int depth = depthRoomTuple.Item1;
+			    foreach (var door in currentRoom.doors){
+			        Room room = door.OtherRoom(currentRoom);
+			        if (door.OtherLock(currentRoom).Contains("1")){
+				        continue;
+                    }
+			        if (door.lock1.Contains("s")){
+				        continue;
+                    }
+			        if (goals.Contains(room)){
+				        return new Tuple<int,Room>(depth+1,room);
+                    }
+			        toVisit.Add(new Tuple<int,Room>(depth+1,room));
+			        visited.Add(room);
+                }			
+            }
+		    return null;
         }
-		return null;
+        protected static string cleanString(string str) {
+            str = Regex.Replace(str, @"\d+", "");
+            str = Regex.Replace(str, " ", "");
+            char[] c = str.ToCharArray();
+            Array.Sort(c);
+            return new String(c);
+        }
+        public void WriteStats(string filename,SearchAgent endAgent) {
+            Dictionary<string, int> dungeonStatistics = new Dictionary<string,int>() {
+                {"roomsInLevel",0},
+                {"enemyRoomsInLevel",0},
+                {"puzzleRoomsInLevel",0},
+                {"itemRoomsInLevel",0},
+                {"doorsInLevel",0},
+                {"passableDoorsInLevel",0},
+                {"lockedDoorsInLevel",0},
+                {"bombLockedDoorsInLevel",0},
+                {"bigKeyDoorsInLevel",0},
+                {"oneWayDoorsInLevel",0},
+                {"itemLockedDoorsInLevel",0},
+                {"puzzleLockedDoorsInLevel",0},
+                {"softLockedDoorsInLevel",0},
+                {"lookAheadsInLevel",0},
+                {"totalCrossings",0},
+                {"maximumCrossings",0},
+                {"maximumDistanceToPath",0},
+                {"pathLength",0},
+                {"roomsOnPath",0},
+                {"enemyRoomsOnPath",0},
+                {"puzzleRoomsOnPath",0},
+                {"itemRoomsOnPath",0},
+                {"doorsOnPath",0},
+                {"lockedDoorsOnPath",0},
+                {"bombLockedDoorsOnPath",0},
+                {"bigKeyLockedDoorsOnPath",0},
+                {"itemLockedDoorsOnPath",0},
+                {"softLockedDoorsOnPath",0},
+                {"puzzleLockedDoorsOnPath",0},
+                {"lookAheadsOnPath",0},
+                {"oneWayDoorsOnPath",0},
+                {"distanceToDungeonKey",0},
+                {"distanceToSpecialItem",0},
+            };
+            Dictionary<string, List<string>> roomStatistics = new Dictionary<string, List<string>>(){
+                {"doorTypesFrom", new List<string>()},
+                {"doorTypesTo", new List<string>()},
+                {"crossings", new List<string>()},
+                {"depth", new List<string>()},
+                {"distanceOfRoomToOptimalPath", new List<string>()},
+                {"neighborTypes", new List<string>()},
+                {"numberOfNeighbors", new List<string>()},
+                {"roomType", new List<string>()},
+            };
+            foreach (var room in rooms.Values) {
+                string type = cleanString(room.type == "" ? "_" : room.type);
+                roomStatistics["roomType"].Add(type);
+                roomStatistics["numberOfNeighbors"].Add("" + room.neighbors.Count);
+                type = "";
+                foreach (var neighbor in room.neighbors){
+                    type += neighbor.type == ""? "_" : neighbor.type;
+                }
+                roomStatistics["neighborTypes"].Add(cleanString(type));
+                roomStatistics["distanceOfRoomToOptimalPath"].Add("" + room.detour);
+                roomStatistics["depth"].Add("" + room.depth);
+                roomStatistics["crossings"].Add("" + room.crossingCount);
+
+                type = "";
+                foreach (var door in room.doors){
+                    type += door.OtherLock(room) == "" ? "_" : door.OtherLock(room);
+                }
+                roomStatistics["doorTypesTo"].Add(cleanString(type));
+
+                type = "";
+                foreach (var door in room.doors){
+                    type += door.OtherLock(door.OtherRoom(room)) == "" ? "_" : door.OtherLock(door.OtherRoom(room)); 
+                }
+                roomStatistics["doorTypesFrom"].Add(cleanString(type));
+
+                dungeonStatistics["roomsInLevel"] += 1;
+                dungeonStatistics["enemyRoomsInLevel"] += ((room.type.Contains('e')) || (room.type.Contains('m')) || (room.type.Contains('b')))? 1 : 0;
+                dungeonStatistics["puzzleRoomsInLevel"] += room.type.Contains('p')? 1 : 0;
+                dungeonStatistics["itemRoomsInLevel"] += ((room.type.Contains('i') ) || (room.type.Contains('I') ) || 
+                                                          (room.type.Contains('k')) || (room.type.Contains('K') ))? 1 : 0;
+                foreach (var door in room.doors){
+                    string doorLock = door.OtherLock(room); 
+                    dungeonStatistics["doorsInLevel"] += 1;
+                    dungeonStatistics["passableDoorsInLevel"] += doorLock == "" ? 1 : 0;
+                    dungeonStatistics["lockedDoorsInLevel"] += doorLock.Contains("k") ? 1 : 0;
+                    dungeonStatistics["bombLockedDoorsInLevel"] += doorLock.Contains("b") ? 1 : 0;
+                    dungeonStatistics["itemLockedDoorsInLevel"] += doorLock.Contains("I") ? 1 : 0;
+                    dungeonStatistics["puzzleLockedDoorsInLevel"] += doorLock.Contains("S") ? 1 : 0;
+                    dungeonStatistics["softLockedDoorsInLevel"] += doorLock.Contains("l") ? 1 : 0;
+                    dungeonStatistics["bigKeyDoorsInLevel"] += doorLock.Contains("K") ? 1 : 0;
+                    dungeonStatistics["oneWayDoorsInLevel"] += doorLock.Contains("1") ? 1 : 0;
+                    dungeonStatistics["lookAheadsInLevel"] += doorLock.Contains("s") ? 1 : 0;
+                }               
+                dungeonStatistics["totalCrossings"] += room.crossingCount;
+                dungeonStatistics["maximumCrossings"] = Math.Max(room.crossingCount,dungeonStatistics["maximumCrossings"]);
+                dungeonStatistics["maximumDistanceToPath"] = Math.Max(room.detour, dungeonStatistics["maximumDistanceToPath"]); 
+            }
+
+            //PATH STATISTICS
+            dungeonStatistics["pathLength"] = endAgent.pathSoFar.Count;
+            dungeonStatistics["roomsOnPath"] = endAgent.visited.Count;
+            foreach (var room in endAgent.visited){
+
+                dungeonStatistics["enemyRoomsOnPath"] += ((room.type.Contains('e')) || (room.type.Contains('m')) || (room.type.Contains('b')))? 1 : 0;
+                dungeonStatistics["puzzleRoomsOnPath"] += room.type.Contains('p')? 1 : 0;
+                dungeonStatistics["itemRoomsOnPath"] += ((room.type.Contains('i') ) || (room.type.Contains('I') ) || 
+                                                          (room.type.Contains('k')) || (room.type.Contains('K') ))? 1 : 0;
+                foreach (var door in room.doors){
+                    string doorLock = door.OtherLock(room); 
+                    dungeonStatistics["doorsOnPath"] += 1;
+                    dungeonStatistics["lockedDoorsOnPath"] += doorLock.Contains("k") ? 1 : 0;
+                    dungeonStatistics["bombLockedDoorsOnPath"] += doorLock.Contains("b") ? 1 : 0;
+                    dungeonStatistics["itemLockedDoorsOnPath"] += doorLock.Contains("I") ? 1 : 0;
+                    dungeonStatistics["puzzleLockedDoorsOnPath"] += doorLock.Contains("S") ? 1 : 0;
+                    dungeonStatistics["softLockedDoorsOnPath"] += doorLock.Contains("l") ? 1 : 0;
+                    dungeonStatistics["bigKeyLockedDoorsOnPath"] += doorLock.Contains("K") ? 1 : 0;
+                    dungeonStatistics["oneWayDoorsOnPath"] += doorLock.Contains("1") ? 1 : 0;
+                    dungeonStatistics["lookAheadsOnPath"] += doorLock.Contains("s") ? 1 : 0;
+                }   
+            }   
+            dungeonStatistics["distanceToDungeonKey"] = endAgent.pathSoFar.FindIndex(a => a.type.Contains("K"));
+            dungeonStatistics["distanceToSpecialItem"] = endAgent.agentPath.FindIndex(a => a.keyItems > 0);
+
+            XDocument statisticsDoc = new XDocument(new XElement("root"));
+            foreach (var stat in dungeonStatistics) {
+                statisticsDoc.Root.Add(new XElement(stat.Key, stat.Value));
+            }
+            foreach (var stat in roomStatistics) {
+                statisticsDoc.Root.Add(new XElement(stat.Key, string.Join(",", stat.Value)));
+            }
+            statisticsDoc.Save(filename);
+            /*
+            XElement Cloudy = new XElement("Data", string.Join(",", sample[0]));
+            Cloudy.SetAttributeValue("name", "Cloudy");
+            XElement Sprinkler = new XElement("Data", string.Join(",", sample[1]));
+            Sprinkler.SetAttributeValue("name", "Sprinkler");
+            XElement Rain = new XElement("Data", string.Join(",", sample[2]));
+            Rain.SetAttributeValue("name", "Rain");
+            XElement Wet = new XElement("Data", string.Join(",", sample[3]));
+            Wet.SetAttributeValue("name", "Wet");
+            XDocument dataDoc = new XDocument(new XElement("root", new XElement[] { Cloudy, Sprinkler, Rain, Wet }));
+            dataDoc.Save("WetRainSprinklerData.xml");
+             * */
         }
     }
 }
