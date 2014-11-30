@@ -15,22 +15,19 @@ using MicrosoftResearch.Infer.Maths;
 using MicrosoftResearch.Infer.Transforms;
 using MicrosoftResearch.Infer.Utils;
 using MicrosoftResearch.Infer.Views;
+using System.Text.RegularExpressions;
 
 using ZeldaInfer.LevelParse;
-namespace ZeldaInfer
-{
-    class Program
-    {
+namespace ZeldaInfer {
+    class Program {
         #region Tutorials
-        protected static Variable<bool> Foo(Variable<bool> coin1, Variable<bool> coin2)
-        {
+        protected static Variable<bool> Foo(Variable<bool> coin1, Variable<bool> coin2) {
 
-           return coin1 & coin2;
+            return coin1 & coin2;
         }
-        protected static void Tutorial1()
-        {
+        protected static void Tutorial1() {
             ArrayList parms = new ArrayList();
-            parms.Add(new VariableParameter("Beta",new object[2]{5,1}));
+            parms.Add(new VariableParameter("Beta", new object[2] { 5, 1 }));
             Variable<bool> coin1 = (Variable<bool>)GetRandomVariable("Bernoulli", GetParameters(parms));//(Variable<bool>) typeof(Variable).GetMethod("Bernoulli",new Type[1]{typeof(double)}).Invoke(null,new object[1]{0.5});//Variable.Bernoulli(0.5);
             Variable<bool> coin2 = Variable.Bernoulli(0.5);
             Variable<bool> bothHeads = Foo(coin1, coin2);//coin1 & coin2;
@@ -40,25 +37,21 @@ namespace ZeldaInfer
             Console.WriteLine("Probability distribution over firstCoin: " + ie.Infer(coin1));
 
         }
-        protected static void Tutorial2()
-        {
+        protected static void Tutorial2() {
             Variable<double> threshold = Variable.New<double>().Named("threshold");
             Variable<double> x = Variable.GaussianFromMeanAndVariance(0, 1).Named("x");
             Variable.ConstrainTrue(x > threshold);
             InferenceEngine engine = new InferenceEngine();
             engine.Algorithm = new ExpectationPropagation();
-            for (double thresh = 0; thresh <= 1; thresh += 0.1)
-            {
+            for (double thresh = 0; thresh <= 1; thresh += 0.1) {
                 threshold.ObservedValue = thresh;
                 Console.WriteLine("Dist over x given thresh of " + thresh + "=" + engine.Infer(x));
             }
-           
+
         }
-        protected static void Tutorial3()
-        {
+        protected static void Tutorial3() {
             double[] data = new double[1000];
-            for (int i = 0; i < data.Length; i++)
-            {
+            for (int i = 0; i < data.Length; i++) {
                 data[i] = Rand.Normal(0, 1);
             }
             Variable<double> mean = Variable.GaussianFromMeanAndVariance(0, 100);
@@ -74,8 +67,7 @@ namespace ZeldaInfer
             Console.WriteLine("prec=" + engine.Infer(precision));
 
         }
-        static void Tutorial4()
-        {
+        static void Tutorial4() {
             double[] incomes = { 63, 16, 28, 55, 22, 20 };
             double[] ages = { 38, 23, 40, 27, 18, 40 };
             bool[] willBuy = { true, false, true, true, false, false };
@@ -96,8 +88,8 @@ namespace ZeldaInfer
 
             InferenceEngine engine = new InferenceEngine(new ExpectationPropagation());
             VectorGaussian wPosterior = engine.Infer<VectorGaussian>(w);
-            Console.WriteLine("Dist over w=\n" + wPosterior); 
-            
+            Console.WriteLine("Dist over w=\n" + wPosterior);
+
             double[] incomesTest = { 58, 18, 22 };
             double[] agesTest = { 36, 24, 37 };
             VariableArray<bool> ytest = Variable.Array<bool>(new Range(agesTest.Length));
@@ -109,8 +101,7 @@ namespace ZeldaInfer
             double[] incomes,
             double[] ages,
             Variable<Vector> w,
-            VariableArray<bool> y)
-        {
+            VariableArray<bool> y) {
             // Create x vector, augmented by 1
             Range j = y.Range;
             Vector[] xdata = new Vector[incomes.Length];
@@ -122,8 +113,7 @@ namespace ZeldaInfer
             double noise = 0.1;
             y[j] = Variable.GaussianFromMeanAndVariance(Variable.InnerProduct(w, x[j]), noise) > 0;
         }
-        static void Tutorial5()
-        {
+        static void Tutorial5() {
 
             // Data from clinical trial
             VariableArray<bool> controlGroup =
@@ -134,26 +124,24 @@ namespace ZeldaInfer
             // Prior on being effective treatment
             Variable<bool> isEffective = Variable.Bernoulli(0.5);
             Variable<double> probIfTreated, probIfControl;
-            using (Variable.If(isEffective))
-            {
+            using (Variable.If(isEffective)) {
                 // Model if treatment is effective
                 ArrayList parms = new ArrayList();
                 parms.Add(new FixedParameter(1));
                 parms.Add(new FixedParameter(1));
                 //parms.Add(new VariableParameter("Beta", new object[2] { 5, 1 }));
-               // Variable<bool> coin1 = (Variable<bool>)GetRandomVariable("Bernoulli", GetParameters(parms));
+                // Variable<bool> coin1 = (Variable<bool>)GetRandomVariable("Bernoulli", GetParameters(parms));
                 probIfControl = (Variable<double>)GetRandomVariable("Beta", GetParameters(parms));//Variable.Beta(1, 1);
                 controlGroup[i] = Variable.Bernoulli(probIfControl).ForEach(i);
                 probIfTreated = Variable.Beta(1, 1);
                 treatedGroup[j] = Variable.Bernoulli(probIfTreated).ForEach(j);
             }
-            using (Variable.IfNot(isEffective))
-            {
+            using (Variable.IfNot(isEffective)) {
                 // Model if treatment is not effective
                 Variable<double> probAll = Variable.Beta(1, 1);
                 controlGroup[i] = Variable.Bernoulli(probAll).ForEach(i);
                 treatedGroup[j] = Variable.Bernoulli(probAll).ForEach(j);
-            } 
+            }
             InferenceEngine ie = new InferenceEngine();
             Console.WriteLine("Probability treatment has an effect = " + ie.Infer(isEffective));
             Console.WriteLine("Probability of good outcome if given treatment = "
@@ -161,8 +149,7 @@ namespace ZeldaInfer
             Console.WriteLine("Probability of good outcome if control = "
                                + (float)ie.Infer<Beta>(probIfControl).GetMean());
         }
-        static void Tutorial6()
-        {
+        static void Tutorial6() {
             Range k = new Range(2);
             VariableArray<Vector> means = Variable.Array<Vector>(k);
             means[k] = Variable.VectorGaussianFromMeanAndPrecision(
@@ -179,18 +166,16 @@ namespace ZeldaInfer
 
             VariableArray<int> z = Variable.Array<int>(n);
 
-            using (Variable.ForEach(n))
-            {
+            using (Variable.ForEach(n)) {
                 z[n] = Variable.Discrete(weights);
-                using (Variable.Switch(z[n]))
-                {
+                using (Variable.Switch(z[n])) {
                     data[n] = Variable.VectorGaussianFromMeanAndPrecision(
                       means[z[n]], precs[z[n]]);
                 }
             }
-            data.ObservedValue = GenerateData(n.SizeAsInt); 
+            data.ObservedValue = GenerateData(n.SizeAsInt);
             // The inference
-            Discrete[] zinit = new Discrete[n.SizeAsInt]; 
+            Discrete[] zinit = new Discrete[n.SizeAsInt];
             for (int i = 0; i < zinit.Length; i++)
                 zinit[i] = Discrete.PointMass(Rand.Int(k.SizeAsInt), k.SizeAsInt);
             z.InitialiseTo(Distribution<int>.Array(zinit));
@@ -199,8 +184,7 @@ namespace ZeldaInfer
             Console.WriteLine("Dist over means=\n" + ie.Infer(means));
             Console.WriteLine("Dist over precs=\n" + ie.Infer(precs));
         }
-        public static Vector[] GenerateData(int nData)
-        {
+        public static Vector[] GenerateData(int nData) {
             Vector trueM1 = Vector.FromArray(2.0, 3.0);
             Vector trueM2 = Vector.FromArray(7.0, 5.0);
             PositiveDefiniteMatrix trueP1 = new PositiveDefiniteMatrix(
@@ -214,14 +198,13 @@ namespace ZeldaInfer
             // Restart the infer.NET random number generator
             Rand.Restart(12347);
             Vector[] data = new Vector[nData];
-            for (int j = 0; j < nData; j++)
-            {
+            for (int j = 0; j < nData; j++) {
                 bool bSamp = trueB.Sample();
                 data[j] = bSamp ? trueVG1.Sample() : trueVG2.Sample();
             }
             return data;
         }
-        public static void Tutorial7(){
+        public static void Tutorial7() {
             int length = 2;
 
             double[] xProbs = { 0.4, 0.6 };
@@ -229,7 +212,7 @@ namespace ZeldaInfer
             double[] yProbs = { 0.7, 0.3 };
             Variable<int> y = Variable.Discrete(yProbs).Named("y");
             double[] zProbs = { 0.8, 0.2 };
-            Variable<int> z = Variable.Discrete(zProbs).Named("z"); 
+            Variable<int> z = Variable.Discrete(zProbs).Named("z");
 
             Variable<int> xy = Variable.Discrete(.25, 0.125, 0.125, .25);
             Variable<int> yz = Variable.Discrete(.25, 0.125, 0.125, .25);
@@ -238,18 +221,18 @@ namespace ZeldaInfer
             int pair_index = 0;
 
             for (int i = 0; i < length; i++) {
-                for (int j = 0; j < length; j++, pair_index++)   {
-                    using (Variable.Case(xy, pair_index))  {
+                for (int j = 0; j < length; j++, pair_index++) {
+                    using (Variable.Case(xy, pair_index)) {
                         Variable.ConstrainEqual(x, i);
                         Variable.ConstrainEqual(y, j);
                     }
 
- 
+
 
                     using (Variable.Case(yz, pair_index)) {
                         Variable.ConstrainEqual(y, i);
                         Variable.ConstrainEqual(z, j);
-                    } 
+                    }
 
                     using (Variable.Case(zx, pair_index)) {
                         Variable.ConstrainEqual(z, i);
@@ -258,11 +241,11 @@ namespace ZeldaInfer
                 }
             }
 
- 
+
 
             InferenceEngine engine = new InferenceEngine(new ExpectationPropagation());
 
- 
+
 
             // Retrieve the posterior distributions
 
@@ -274,31 +257,25 @@ namespace ZeldaInfer
         }
         #endregion
 
-        static void Sprinkler()
-        {
+        static void Sprinkler() {
             bool[] rainData = new bool[1000];
             bool[] sprinklerData = new bool[1000];
             bool[] grassData = new bool[1000];
             int totalGrassWet = 0;
-            for (int i = 0; i < rainData.Length; i++)
-            {
+            for (int i = 0; i < rainData.Length; i++) {
                 rainData[i] = Rand.Double() < 0.1;
-                if (rainData[i])
-                {
+                if (rainData[i]) {
                     sprinklerData[i] = Rand.Double() < 0.1;
                 }
-                else
-                {
+                else {
                     sprinklerData[i] = Rand.Double() < 0.4;
                 }
 
-                if (rainData[i] || sprinklerData[i])
-                {
+                if (rainData[i] || sprinklerData[i]) {
                     totalGrassWet++;
                     grassData[i] = Rand.Double() < 0.99;
                 }
-                else
-                {
+                else {
                     grassData[i] = Rand.Double() < 0.01;
 
                 }
@@ -314,16 +291,12 @@ namespace ZeldaInfer
             Variable<double> sprinklerRain = Variable.Beta(6, 1).Named("sprinklerRain");
             VariableArray<bool> sprinkler = Variable.Array<bool>(dataRange).Named("sprinkler");
 
-            using (Variable.ForEach(dataRange))
-            {
-                using (Variable.ForEach(dataRange))
-                {
-                    using (Variable.If(rain[dataRange]))
-                    {
+            using (Variable.ForEach(dataRange)) {
+                using (Variable.ForEach(dataRange)) {
+                    using (Variable.If(rain[dataRange])) {
                         sprinkler[dataRange] = Variable.Bernoulli(sprinklerRain);
                     }
-                    using (Variable.IfNot(rain[dataRange]))
-                    {
+                    using (Variable.IfNot(rain[dataRange])) {
                         sprinkler[dataRange] = Variable.Bernoulli(sprinklerNoRain);
                     }
                 }
@@ -333,29 +306,22 @@ namespace ZeldaInfer
             Variable<double> grassRainNoSprinkler = Variable.Beta(4, 1).Named("grassRainNoSprinkler");
             Variable<double> grassNoRainNoSprinkler = Variable.Beta(5, 1).Named("grassNoRainNoSprinkler");
             VariableArray<bool> grass = Variable.Array<bool>(dataRange).Named("grass");
-            using (Variable.ForEach(dataRange))
-            {
-                using (Variable.If(rain[dataRange]))
-                {
-                    using (Variable.If(sprinkler[dataRange]))
-                    {
+            using (Variable.ForEach(dataRange)) {
+                using (Variable.If(rain[dataRange])) {
+                    using (Variable.If(sprinkler[dataRange])) {
                         grass[dataRange] = Variable.Bernoulli(grassRainSprinkler);
                     }
-                    using (Variable.IfNot(sprinkler[dataRange]))
-                    {
+                    using (Variable.IfNot(sprinkler[dataRange])) {
                         grass[dataRange] = Variable.Bernoulli(grassRainNoSprinkler);
 
                     }
                 }
-                using (Variable.IfNot(rain[dataRange]))
-                {
-                    using (Variable.If(sprinkler[dataRange]))
-                    {
+                using (Variable.IfNot(rain[dataRange])) {
+                    using (Variable.If(sprinkler[dataRange])) {
                         grass[dataRange] = Variable.Bernoulli(grassNoRainSprinkler);
 
                     }
-                    using (Variable.IfNot(sprinkler[dataRange]))
-                    {
+                    using (Variable.IfNot(sprinkler[dataRange])) {
                         grass[dataRange] = Variable.Bernoulli(grassNoRainNoSprinkler);
                     }
                 }
@@ -372,32 +338,26 @@ namespace ZeldaInfer
             Console.WriteLine(engine.Infer(grassNoRainSprinkler));
             Console.WriteLine(engine.Infer(grassNoRainNoSprinkler));
         }
-        static void NestedTested()
-        {
+        static void NestedTested() {
 
             bool[] rainData = new bool[1000];
             bool[] sprinklerData = new bool[1000];
             bool[] grassData = new bool[1000];
             int totalGrassWet = 0;
-            for (int i = 0; i < rainData.Length; i++)
-            {
+            for (int i = 0; i < rainData.Length; i++) {
                 rainData[i] = Rand.Double() < 0.1;
-                if (rainData[i])
-                {
+                if (rainData[i]) {
                     sprinklerData[i] = Rand.Double() < 0.1;
                 }
-                else
-                {
+                else {
                     sprinklerData[i] = Rand.Double() < 0.4;
                 }
 
-                if (rainData[i] || sprinklerData[i])
-                {
+                if (rainData[i] || sprinklerData[i]) {
                     totalGrassWet++;
                     grassData[i] = Rand.Double() < 0.99;
                 }
-                else
-                {
+                else {
                     grassData[i] = Rand.Double() < 0.01;
 
                 }
@@ -415,40 +375,33 @@ namespace ZeldaInfer
             parameters.Add(new VariableParameter("Beta", new object[2] { 8, 1 }));
 
             VariableArray<bool> sprinkler = Variable.Array<bool>(dataRange).Named("sprinkler");
-  
+
             ArrayList nodes = TestOn<bool>(ref sprinkler, dataRange, sprinklerParents, "Bernoulli", parameters, "sprinkler");
-         //   ArrayList nodes = TestOnFake(ref sprinkler, dataRange, sprinklerParents, "Bernoulli", parameters, "sprinkler");
-           
+            //   ArrayList nodes = TestOnFake(ref sprinkler, dataRange, sprinklerParents, "Bernoulli", parameters, "sprinkler");
+
 
             Variable<double> grassRainSprinkler = Variable.Beta(2, 1).Named("grassRainSprinkler");
             Variable<double> grassNoRainSprinkler = Variable.Beta(3, 1).Named("grassNoRainSprinkler");
             Variable<double> grassRainNoSprinkler = Variable.Beta(4, 1).Named("grassRainNoSprinkler");
             Variable<double> grassNoRainNoSprinkler = Variable.Beta(5, 1).Named("grassNoRainNoSprinkler");
             VariableArray<bool> grass = Variable.Array<bool>(dataRange).Named("grass");
-            using (Variable.ForEach(dataRange))
-            {
-                using (Variable.If(rain[dataRange]))
-                {
-                    using (Variable.If(sprinkler[dataRange]))
-                    {
+            using (Variable.ForEach(dataRange)) {
+                using (Variable.If(rain[dataRange])) {
+                    using (Variable.If(sprinkler[dataRange])) {
                         Variable<bool> temp = Variable.Bernoulli(grassRainSprinkler);
                         grass[dataRange] = temp;
                     }
-                    using (Variable.IfNot(sprinkler[dataRange]))
-                    {
+                    using (Variable.IfNot(sprinkler[dataRange])) {
                         grass[dataRange] = Variable.Bernoulli(grassRainNoSprinkler);
 
                     }
                 }
-                using (Variable.IfNot(rain[dataRange]))
-                {
-                    using (Variable.If(sprinkler[dataRange]))
-                    {
+                using (Variable.IfNot(rain[dataRange])) {
+                    using (Variable.If(sprinkler[dataRange])) {
                         grass[dataRange] = Variable.Bernoulli(grassNoRainSprinkler);
 
                     }
-                    using (Variable.IfNot(sprinkler[dataRange]))
-                    {
+                    using (Variable.IfNot(sprinkler[dataRange])) {
                         grass[dataRange] = Variable.Bernoulli(grassNoRainNoSprinkler);
                     }
                 }
@@ -462,45 +415,37 @@ namespace ZeldaInfer
             Console.WriteLine(engine.Infer(grassRainNoSprinkler));
             Console.WriteLine(engine.Infer(grassNoRainSprinkler));
             Console.WriteLine(engine.Infer(grassNoRainNoSprinkler));
-            foreach (Variable<double> var in nodes)
-            {
+            foreach (Variable<double> var in nodes) {
                 Console.WriteLine(engine.Infer(var));
             }
             Variable<double> condition = Variable.Beta(1, 1);
-           
+
 
         }
-        public abstract class Parameter
-        {
+        public abstract class Parameter {
             abstract public object GetValue();
         }
-        public class FixedParameter : Parameter
-        {
+        public class FixedParameter : Parameter {
             public object value;
-            public FixedParameter(object val){
+            public FixedParameter(object val) {
                 value = val;
             }
-            public override object GetValue()
-            {
- 	            return value;
+            public override object GetValue() {
+                return value;
             }
         }
-        public class VariableParameter : Parameter
-        {
+        public class VariableParameter : Parameter {
             public string distributionType;
             public object[] defaultParameters;
 
-            public VariableParameter(string dist, object[] defaultParms)
-            {
+            public VariableParameter(string dist, object[] defaultParms) {
                 distributionType = dist;
                 defaultParameters = defaultParms;
             }
-            public override object GetValue()
-            {
-                 return  GetRandomVariable(distributionType, defaultParameters);
+            public override object GetValue() {
+                return GetRandomVariable(distributionType, defaultParameters);
             }
-            public object GetVariable()
-            {
+            public object GetVariable() {
                 /*
                 Type[] argumentTypes = new Type[defaultParameters.Length];
                 for (int ii = 0; ii < defaultParameters.Length; ii++)
@@ -509,34 +454,31 @@ namespace ZeldaInfer
                 }
                 return (Variable<T>)typeof(Variable).GetMethod(distributionType, new Type[] { typeof(double), typeof(double) }).Invoke(null, defaultParameters);
                  * */
-                return  GetRandomVariable(distributionType, defaultParameters);
+                return GetRandomVariable(distributionType, defaultParameters);
             }
         }
-        
-        static object GetRandomVariable(string distributionType, object[] defaultParameters)
-        {
+
+        static object GetRandomVariable(string distributionType, object[] defaultParameters) {
             Type[] argumentTypes = new Type[defaultParameters.Length];
-            for (int ii = 0; ii < defaultParameters.Length; ii++)
-            {
+            for (int ii = 0; ii < defaultParameters.Length; ii++) {
                 argumentTypes[ii] = defaultParameters[ii].GetType();
             }
             object returnVal = typeof(Variable).GetMethod(distributionType, argumentTypes).Invoke(null, defaultParameters);
             return returnVal;
         }
-        static object[] GetParameters(ArrayList parameters){
+        static object[] GetParameters(ArrayList parameters) {
             object[] objParameters = new object[parameters.Count];
-            for (int ii = 0; ii < parameters.Count; ii++){
+            for (int ii = 0; ii < parameters.Count; ii++) {
                 objParameters[ii] = (parameters[ii] as Parameter).GetValue();
-               
+
             }
             return objParameters;
         }
 
-        static ArrayList TestOn<T>(ref VariableArray<T> test,Range range, List<VariableArray<bool> > parents, string distribution, ArrayList parameters, string nameSoFar = "")
-        {
+        static ArrayList TestOn<T>(ref VariableArray<T> test, Range range, List<VariableArray<bool>> parents, string distribution, ArrayList parameters, string nameSoFar = "") {
             VariableArray<bool> condition = parents[0];
             parents.RemoveAt(0);
-          //  Variable<double> varCopy = GetVariable<double>(distributionType, defaultParameters);//(Variable<T>)typeof(Variable).GetMethod(distributionType, new Type[]{typeof(double),typeof(double)}).Invoke(null, defaultParameters);//Activator.CreateInstance(variable.GetType(), defaultParameters);
+            //  Variable<double> varCopy = GetVariable<double>(distributionType, defaultParameters);//(Variable<T>)typeof(Variable).GetMethod(distributionType, new Type[]{typeof(double),typeof(double)}).Invoke(null, defaultParameters);//Activator.CreateInstance(variable.GetType(), defaultParameters);
             ArrayList outputList = new ArrayList();
             object[] parameterObjectsT = null;
             Variable<T> randomVarT = null;
@@ -544,29 +486,25 @@ namespace ZeldaInfer
             Variable<T> randomVarF = null;
             if (parents.Count == 0) {
                 parameterObjectsT = GetParameters(parameters);
-                foreach (object parameter in parameterObjectsT)
-                {
+                foreach (object parameter in parameterObjectsT) {
                     Type type = parameter.GetType();
-                    if (parameter.GetType() == typeof(Variable<double>))
-                    {
-                        outputList.Add((parameter as Variable<double>).Named( nameSoFar + condition.Name));
+                    if (parameter.GetType() == typeof(Variable<double>)) {
+                        outputList.Add((parameter as Variable<double>).Named(nameSoFar + condition.Name));
                     }
                 }
                 randomVarT = ((Variable<T>)GetRandomVariable(distribution, parameterObjectsT) as Variable<T>);
                 parameterObjectsF = GetParameters(parameters);
-                foreach (object parameter in parameterObjectsF)
-                {
+                foreach (object parameter in parameterObjectsF) {
                     Type type = parameter.GetType();
-                    if (parameter.GetType() == typeof(Variable<double>))
-                    {
+                    if (parameter.GetType() == typeof(Variable<double>)) {
                         outputList.Add((parameter as Variable<double>).Named(nameSoFar + "No" + condition.Name));
                     }
                 }
                 randomVarF = ((Variable<T>)GetRandomVariable(distribution, parameterObjectsF) as Variable<T>);
             }
 
-            using (Variable.ForEach(range))   {
-                using (Variable.If(condition[range]))  {
+            using (Variable.ForEach(range)) {
+                using (Variable.If(condition[range])) {
                     if (parents.Count == 0) {
                         test[range] = randomVarT;
                     }
@@ -574,9 +512,8 @@ namespace ZeldaInfer
                         outputList.AddRange(TestOnHelper<T>(ref test, range, parents, distribution, parameters, nameSoFar + condition.Name));
                     }
                 }
-                using (Variable.IfNot(condition[range]))    {
-                    if (parents.Count == 0)
-                    {
+                using (Variable.IfNot(condition[range])) {
+                    if (parents.Count == 0) {
 
                         test[range] = randomVarF;
                     }
@@ -587,51 +524,40 @@ namespace ZeldaInfer
             }
             return outputList;
         }
-        static ArrayList TestOnHelper<T>(ref VariableArray<T> test, Range range, List<VariableArray<bool>> parents, string distribution, ArrayList parameters, string nameSoFar = "")
-        {
+        static ArrayList TestOnHelper<T>(ref VariableArray<T> test, Range range, List<VariableArray<bool>> parents, string distribution, ArrayList parameters, string nameSoFar = "") {
             VariableArray<bool> condition = parents[0];
             parents.RemoveAt(0);
             ArrayList outputList = new ArrayList();
 
-            using (Variable.If(condition[range]))
-            {
-                if (parents.Count == 0)
-                {
+            using (Variable.If(condition[range])) {
+                if (parents.Count == 0) {
                     object[] parameterObjects = GetParameters(parameters);
-                    foreach (object parameter in parameterObjects)
-                    {
-                        if (parameter.GetType() == typeof(Variable<double>))
-                        {
+                    foreach (object parameter in parameterObjects) {
+                        if (parameter.GetType() == typeof(Variable<double>)) {
                             outputList.Add((parameter as Variable<double>).Named(nameSoFar + condition.Name));
                         }
                     }
                     test[range] = ((Variable<T>)GetRandomVariable(distribution, parameterObjects) as Variable<T>);
                 }
-                else
-                {
+                else {
                     outputList.AddRange(TestOnHelper<T>(ref test, range, parents, distribution, parameters, nameSoFar + condition.Name));
                 }
             }
-            using (Variable.IfNot(condition[range]))
-            {
-                if (parents.Count == 0)
-                {
+            using (Variable.IfNot(condition[range])) {
+                if (parents.Count == 0) {
                     object[] parameterObjects = GetParameters(parameters);
-                    foreach (object parameter in parameterObjects)
-                    {
-                        if (parameter.GetType() == typeof(Variable<double>))
-                        {
+                    foreach (object parameter in parameterObjects) {
+                        if (parameter.GetType() == typeof(Variable<double>)) {
                             outputList.Add((parameter as Variable<double>).Named(nameSoFar + "No" + condition.Name));
                         }
                     }
                     test[range] = ((Variable<T>)GetRandomVariable(distribution, parameterObjects) as Variable<T>);
                 }
-                else
-                {
+                else {
                     outputList.AddRange(TestOnHelper<T>(ref test, range, parents, distribution, parameters, nameSoFar + "No" + condition.Name));
                 }
             }
-            
+
             return outputList;
         }
         static void ModelNetworkSprinkler() {
@@ -672,19 +598,19 @@ namespace ZeldaInfer
 			    new Vector[] { Vector.FromArray(0.9, 0.1) /* rain */, Vector.FromArray(0.0, 1.0) /* not rain */}  // Not sprinkler
 		    };
             int[][] sample = WetGlassSprinklerRainModel.Sample(1000, probCloudy, cptSprinkler, cptRain, cptWetGrass);
-      
-            Dictionary<string,int[]> observedData = new Dictionary<string,int[]>();
-            observedData.Add("Cloudy",sample[0]);
-            observedData.Add("Sprinkler",sample[1]);
-            observedData.Add("Rain",sample[2]);
-            observedData.Add("Wet",sample[3]);
+
+            Dictionary<string, int[]> observedData = new Dictionary<string, int[]>();
+            observedData.Add("Cloudy", sample[0]);
+            observedData.Add("Sprinkler", sample[1]);
+            observedData.Add("Rain", sample[2]);
+            observedData.Add("Wet", sample[3]);
 
             //LEARN
             model.LearnParameters(observedData);
         }
 
         static void ModelNetworkSprinklerBeyond() {
-            
+
             GraphicalModel model = new GraphicalModel();
             Range C = new Range(2).Named("C");
             Range S = new Range(2).Named("S");
@@ -704,7 +630,7 @@ namespace ZeldaInfer
             model.AddLink(rain, wet);
             model.AddLink(cloudy, wet);
             model.CreateNetwork();
-            
+
             //SAMPLE DATA
 
             Vector probCloudy = Vector.FromArray(0.5, 0.5);
@@ -750,30 +676,53 @@ namespace ZeldaInfer
             Rain.SetAttributeValue("name", "Rain");
             XElement Wet = new XElement("Data", string.Join(",", sample[3]));
             Wet.SetAttributeValue("name", "Wet");
-            XDocument dataDoc = new XDocument( new XElement("root",new XElement[]{Cloudy,Sprinkler,Rain,Wet}));
+            XDocument dataDoc = new XDocument(new XElement("root", new XElement[] { Cloudy, Sprinkler, Rain, Wet }));
             dataDoc.Save("WetRainSprinklerData.xml");
         }
-        static void Main(string[] args)
-        {
-        //    Sprinkler();
-     //       NestedTested();
-         //  WetGrassSprinklerRain test = new WetGrassSprinklerRain();
+        static void Main(string[] args) {
+            //    Sprinkler();
+            //       NestedTested();
+              WetGrassSprinklerRain test = new WetGrassSprinklerRain();
 
-          // test.Run();
-        //    Tutorial5();
-          //  WriteData();
-        //  ModelNetworkSprinkler();
-         //  ModelNetworkSprinklerBeyond();
-        
-            //ModelNetworkSprinklerFile();
+             test.Run();
+            //    Tutorial5();
+            //  WriteData();
+            //  ModelNetworkSprinkler();
+            //  ModelNetworkSprinklerBeyond();
 
-            Dungeon dungeon = new Dungeon("Levels/LttP 1.xml");
-            SearchAgent path = dungeon.getOptimalPath(true, 1);
-            dungeon.UpdateRooms(path.pathSoFar);
-            dungeon.WriteStats("LttP1Summary.xml", path);
-            Console.WriteLine(path.pathToString());
+            ModelNetworkSprinklerFile();
+            /*
+            string[] levels = new string[]{
+                "Levels/LA 1.xml","Levels/LA 2.xml","Levels/LA 3.xml","Levels/LA 4.xml",
+                "Levels/LA 6.xml","Levels/LA 7.xml",
+                "Levels/LA 8.xml","Levels/LoZ 1.xml",
+                "Levels/LoZ 2.xml","Levels/LoZ 3.xml","Levels/LoZ 4.xml","Levels/LoZ 5.xml",
+                "Levels/LoZ 7.xml","Levels/LoZ 8.xml","Levels/LoZ 9.xml","Levels/LoZ2 1.xml",
+                "Levels/LoZ2 2.xml",
+          "Levels/LoZ2 4.xml","Levels/LoZ2 5.xml","Levels/LoZ2 6.xml",
+                "Levels/LoZ2 7.xml","Levels/LoZ2 8.xml",
+              "Levels/LoZ2 9.xml","Levels/LttP 1.xml",
+                "Levels/LttP 10.xml",
+                "Levels/LttP 11.xml",
+                "Levels/LttP 2.xml","Levels/LttP 3.xml",
+                "Levels/LttP 4.xml","Levels/LttP 5.xml","Levels/LttP 6.xml","Levels/LttP 7.xml",
+                "Levels/LttP 8.xml","Levels/LttP 9.xml",
+            };
+
+            foreach (var level in levels) {
+                Console.WriteLine(level);
+                Dungeon dungeon = new Dungeon(level);
+                SearchAgent path = dungeon.getOptimalPath(level.Contains("LttP"));
+                Console.WriteLine(path.pathToString());
+                dungeon.UpdateRooms(path);
+                string output = level;
+                output = Regex.Replace(output, @"Levels", "Summaries");
+                output = Regex.Replace(output, " ", "");
+                dungeon.WriteStats(output, path);
+            }
+            // Console.WriteLine(path.pathToString());*/
             Console.WriteLine("ALL DONE :)");
-            Console.Read(); 
+            Console.Read();
         }
     }
 }

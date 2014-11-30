@@ -6,43 +6,55 @@ using System.Threading.Tasks;
 
 namespace ZeldaInfer.LevelParse {
     public class SearchAgent : Priority_Queue.PriorityQueueNode {
-        public List<Room> pathSoFar;
+        public SearchAgent parent;
         public int keysAcquired;
         public int keysSpent;
         public bool bigKey;
         public bool requiresBigKey;
         public int items;
         public int keyItems;
+        public bool canAdd = true;
         public bool gotItem = false;
-        public List<string> switchesSet;
-        public SortedSet<Room> visited;
-        public List<SearchAgent> agentPath;
         public Room currentRoom;
-        public SearchAgent(List<Room> pathSoFar,
+        public int actualHash = -1;
+        public bool hasVisited(Room room){
+            if (currentRoom == room){
+                return canAdd;
+            }
+            if (parent != null) {
+                return parent.hasVisited(room);
+            }
+            else {
+                return false;
+            }
+        }
+        public bool switchSet(string sw) {
+            if (currentRoom.type.Contains(sw)) {
+                return canAdd;
+            }
+            if (parent != null) {
+                return parent.switchSet(sw);
+            }
+            else {
+                return false;
+            }
+        }
+        public SearchAgent(SearchAgent parent,
                            int keysAcquired,
                            int keysSpent,
                            bool bigKey,
                            bool requiresBigKey,
                            int items,
                            int keyItems,
-                           List<string> switchesSet,
-                           Room currentRoom,
-                           List<SearchAgent> agentPath,
-                           SortedSet<Room> visited) {
-            this.pathSoFar = new List<Room>(pathSoFar);
-            this.agentPath = new List<SearchAgent>(agentPath);
-            this.agentPath.Add(this);
+                           Room currentRoom) {
             this.keysAcquired = keysAcquired;
             this.keysSpent = keysSpent;
             this.bigKey = bigKey;
-
+            this.parent = parent;
             this.requiresBigKey = requiresBigKey;
             this.items = items;
             this.keyItems = keyItems;
-            this.switchesSet = new List<string>(switchesSet);
-            this.visited = new SortedSet<Room>(visited, new RoomComparer());
-            bool canAdd = true;
-            if (!visited.Contains(currentRoom)) {
+            if (!hasVisited(currentRoom)) {
                 if (currentRoom.type.Contains("k")) {
                     this.keysAcquired++;
                     this.gotItem = true;
@@ -55,9 +67,8 @@ namespace ZeldaInfer.LevelParse {
                     this.bigKey = true;
                     this.gotItem = true;
                 }
-                foreach (var type in currentRoom.type.Split(new char[] { ' ' })) {
+                foreach (var type in currentRoom.type.Split(new char[] { ',' })) {
                     if (type.Contains("S")) {
-                        this.switchesSet.Add(type);
                         this.gotItem = true;
                     }
                 }
@@ -71,55 +82,69 @@ namespace ZeldaInfer.LevelParse {
                     }
                 }
             }
-            if (canAdd) {
-                this.visited.Add(currentRoom);
-            }
-            this.pathSoFar.Add(currentRoom);
             this.currentRoom = currentRoom;
         }
-        public override int GetHashCode() {
-            unchecked // Overflow is fine, just wrap
-            {  
- 
 
-                int hash = 17;
-                // Suitable nullity checks etc, of course :)
-                hash = hash * 486187739 + keysAcquired.GetHashCode();
-                hash = hash * 486187739 + keysSpent.GetHashCode();
-                hash = hash * 486187739 + bigKey.GetHashCode();
-                hash = hash * 486187739 + items.GetHashCode();
-                hash = hash * 486187739 + keyItems.GetHashCode();
-              //  Console.WriteLine(keyItems.GetHashCode());
-                hash = hash * 486187739 + currentRoom.GetHashCode();
-                foreach (var room in visited) {
-            //    foreach (var room in pathSoFar) {
-                    hash = hash * 486187739 + room.GetHashCode();
+        public override int GetHashCode() {
+            if (actualHash == -1) {
+                unchecked // Overflow is fine, just wrap
+                {
+                    SortedSet<Room> rooms = new SortedSet<Room>(new RoomComparer());
+
+                    int hash = 17;
+                    // Suitable nullity checks etc, of course :)
+                    hash = hash * 486187739 + keysAcquired.GetHashCode();
+                    hash = hash * 486187739 + keysSpent.GetHashCode();
+                    hash = hash * 486187739 + bigKey.GetHashCode();
+                    hash = hash * 486187739 + items.GetHashCode();
+                    hash = hash * 486187739 + keyItems.GetHashCode();
+                    hash = hash * 486187739 + currentRoom.GetHashCode();
+                    SearchAgent agent = this;
+                    while (agent != null) {
+                        rooms.Add(agent.currentRoom);
+                        agent = agent.parent;
+                    }
+                    foreach (var room in rooms) {
+                        hash = hash * 486187739 + room.GetHashCode();
+
+                    }
+                    actualHash = hash;
+                    return hash;
                 }
-                foreach (var switchSet in switchesSet) {
-                    hash = hash * 486187739 + switchSet.GetHashCode();
-                }
-                return hash;
             }
+            else {
+                return actualHash;
+            }
+          
         }
         public string pathToString() {
             string str = "";
-            foreach (var agent in agentPath) {
-                str += "(" + agent.bigKey + "," + agent.keyItems + "," + agent.keysAcquired + "," + agent.keysSpent + "," + agent.currentRoom.type + ") > \n ";
+            SearchAgent agent = this;
+            while (agent != null) {
+                str +=  "(" + agent.bigKey + "," + agent.keyItems + "," + agent.keysAcquired + "," + agent.keysSpent + "," + agent.currentRoom.type + ",";
+                str += ") > \n ";
+                agent = agent.parent;
             }
+            /*
+            foreach (var agent in agentPath) {
+                str += "(" + agent.bigKey + "," + agent.keyItems + "," + agent.keysAcquired + "," + agent.keysSpent + "," + agent.currentRoom.type + ",";
+                foreach (var sw in agent.switchesSet) {
+                    str += sw + ":";
+                }
+                str += ") > \n ";
+            }
+             * */
             return str;
         }
         public List<SearchAgent> GetChildren() {
-            Room cameFrom = null;
-            if (pathSoFar.Count > 1) {
-                cameFrom = pathSoFar[pathSoFar.Count - 2];
-            }
+           
             List<SearchAgent> children = new List<SearchAgent>();
 
             if (currentRoom.neighbors.Count == 1) {
-                children.Add(new SearchAgent(pathSoFar, keysAcquired,keysSpent, 
+                children.Add(new SearchAgent(this, keysAcquired,keysSpent, 
                                              bigKey, requiresBigKey, 
                                              items, keyItems,
-                                             switchesSet, currentRoom.neighbors[0],agentPath,visited));
+                                             currentRoom.neighbors[0]));
             }
             else {
                 foreach (var door in currentRoom.doors) {
@@ -127,16 +152,20 @@ namespace ZeldaInfer.LevelParse {
                     if ((door.lock1.Contains('s')) ||
                         (!bigKey && door.lock1.Contains('K')) ||
                         (keyItems == 0 && door.lock1.Contains("I")) ||
-                        door.OtherLock(currentRoom).Contains("1") || 
-                        (otherRoom == cameFrom && !gotItem)){
+                        door.OtherLock(currentRoom).Contains("O") || 
+                        (parent!= null && otherRoom == parent.currentRoom && !gotItem)){
+
                             continue;
                     }
                     if (door.lock1.Contains("S")) {
-                        bool canContinue = false;
+                        bool canContinue = true;
+                       
                         foreach (var type in door.lock1.Split(new char[] {','})) {
-                            if (switchesSet.Contains(type)) {
-                                canContinue = true;
-                                break;
+                            if (type.Contains("S")) {
+                                if (!switchSet(type)) {
+                                    canContinue = false;
+                                    break;
+                                }
                             }
                         }
                         if (!canContinue) {
@@ -144,19 +173,20 @@ namespace ZeldaInfer.LevelParse {
                         }
                     }
                     int childKeysSpent = keysSpent;
-                    if (door.lock1.Contains("k") && !pathSoFar.Contains(otherRoom)) {
+                    if (door.lock1.Contains("k") && !hasVisited(otherRoom)) {
                         childKeysSpent++;
                     }
                     if (keysAcquired-childKeysSpent < 0) {
                         continue;
                     }
-                    children.Add(new SearchAgent(pathSoFar, keysAcquired, childKeysSpent, 
+                    children.Add(new SearchAgent(this, keysAcquired, childKeysSpent, 
                                                  bigKey, requiresBigKey,
                                                  items, keyItems, 
-                                                 switchesSet, otherRoom, agentPath,visited));
+                                                  otherRoom));
 
                 }
             }
+          
             return children;
         }
     }
