@@ -1,0 +1,10 @@
+Player gets ball at S6
+needs it to go to S4
+Goes to S8, hits switch
+Gets ball at S9
+needs ball at S9 to hit S5
+Throws ball at S10
+Picks up ball at S11
+Throw ball to S7
+Throw ball to S12
+Carry ball to S3
