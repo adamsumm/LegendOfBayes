@@ -33,17 +33,17 @@
   <oneWayDoorsOnPath>4</oneWayDoorsOnPath>
   <distanceToDungeonKey>23</distanceToDungeonKey>
   <distanceToSpecialItem>31</distanceToSpecialItem>
-  <doorTypesFrom>_;_;l;k;l;k;l;_;l;Sl;Sl;_;_;S;l;Sl;_;O;_;_;k;l;_;l;k;l;_;l;_;l;_;_;_;_;k;_;_;_;_;_;_;k;_;_;_;k;l;O;_;k;_;_;_;l;_;O;_;_;K;S;k;K;_;l;_;_;_;_;_;S;_;k;S;_;k;k;_;O;S;_;l;O</doorTypesFrom>
-  <doorTypesTo>_;_;l;k;l;k;l;_;l;Sl;Sl;_;_;S;l;Sl;_;O;_;_;k;l;_;l;k;l;_;l;_;l;_;_;_;_;k;_;_;_;_;_;_;k;_;_;_;k;l;O;_;k;_;_;_;l;_;O;_;_;K;S;k;K;_;l;_;_;_;_;_;S;_;k;S;_;k;k;_;O;S;_;l;O</doorTypesTo>
+  <doorTypesFrom>_;_,l;k,l;k,l;_,l,Sl,Sl;_;_,S;l,Sl;_,O;_,_;k,l;_,l;k,l;_,l;_,l;_;_,_,_,k;_,_;_,_;_,_,k;_,_;_,k,l,O;_,k;_,_;_,l;_,O;_,_,K,S;k,K;_,l;_,_;_,_;_,S;_,k,S;_,k;k;_,O;S;_;l,O</doorTypesFrom>
+  <doorTypesTo>_;_,l;k,l;k,l;_,l,Sl,Sl;_;_,S;l,Sl;_,O;_,_;k,l;_,l;k,l;_,l;_,l;_;_,_,_,k;_,_;_,_;_,_,k;_,_;_,k,l,O;_,k;_,_;_,l;_,O;_,_,K,S;k,K;_,l;_,_;_,_;_,S;_,k,S;_,k;k;_,O;S;_;l,O</doorTypesTo>
   <crossings>1;1;1;1;3;1;1;1;0;1;1;1;1;2;2;0;1;1;1;2;1;2;0;2;2;1;2;1;0;0;0;1;1;1;0;1;1;1;1</crossings>
   <depth>0;1;2;3;4;5;9;7;8;23;12;13;11;21;22;16;15;14;16;20;30;17;18;19;18;31;32;35;33;19;34;38;37;36;38;39;33;40;10</depth>
   <distanceOfRoomToOptimalPath>0;0;0;0;0;0;0;0;1;0;0;0;0;0;0;1;0;0;0;0;0;0;1;0;0;0;0;0;1;2;2;0;0;0;1;0;0;0;0</distanceOfRoomToOptimalPath>
-  <neighborTypes>e;ek;s;e;ep;ek;p;ep;ep;Sei;Sep;p;ep;p;_;p;K;Sep;_;p;ep;Sekp;e;p;ep;p;ekp;p;eikp;K;p;e;ekp;p;p;ep;p;ep;p;eikp;p;p;ep;Ip;e;ep;ep;p;ek;ep;ekp;ep;ep;p;e;ep;e;ep;Ip;S;e;e;e;p;e;p;ek;ep;b;ep;e;eip;Sp;e;ep;ep;eip;t;e;b;ep;Sekp</neighborTypes>
+  <neighborTypes>e;ek,s;e,ep;ek,p;ep,ep,Sei,Sep;p;ep,p;_,p;K,Sep;_,p;ep,Sekp;e,p;ep,p;ekp,p;eikp,K;p;e,ekp,p,p;ep,p;ep,p;eikp,p,p;ep,Ip;e,ep,ep,p;ek,ep;ekp,ep;ep,p;e,ep;e,ep,Ip,S;e,e;e,p;e,p;ek,ep;b,ep;e,eip,Sp;e,ep;ep;eip,t;e;b;ep,Sekp</neighborTypes>
   <numberOfNeighbors>1;2;2;2;4;1;2;2;2;2;2;2;2;2;2;1;4;2;2;3;2;4;2;2;2;2;4;2;2;2;2;2;3;2;1;2;1;1;2</numberOfNeighbors>
   <roomType>s;e;ek;ep;p;Sei;ep;Sep;_;K;p;ep;Sekp;eikp;p;p;p;e;p;ekp;ep;ep;e;p;ep;Ip;e;e;ep;ek;p;eip;ep;e;Sp;b;S;t;ep</roomType>
   <enemyNeighbors>1;1;2;1;4;0;1;0;1;0;2;1;1;1;1;0;2;1;1;1;1;3;2;2;1;2;2;2;1;1;2;2;2;2;1;1;1;1;2</enemyNeighbors>
-  <puzzleNeighbors>0;0;0;1;1;0;1;1;3;1;1;0;2;0;1;0;1;1;1;0;2;1;1;0;2;0;2;1;1;2;1;0;3;1;2;0;2;0;3;1;2;1;3;0;1;1;2;1;2;0;1;0;2;1;0;0;1;0;1;0;1;1;1;0;2;1;1;0;1;0;1;1;0;0;0;0;2;1</puzzleNeighbors>
-  <itemNeighbors></itemNeighbors>
+  <puzzleNeighbors>0;0;1;1;3;1;2;1;1;1;2;1;2;2;1;1;3;2;2;3;2;3;1;2;2;1;2;0;1;1;1;1;2;1;1;1;0;0;2</puzzleNeighbors>
+  <itemNeighbors>0;1;0;1;1;0;0;0;1;0;1;0;0;1;2;0;1;0;0;1;1;0;1;1;0;0;1;0;0;0;1;0;1;0;0;1;0;0;1</itemNeighbors>
   <doorsToNeighbors>1;2;2;2;4;1;2;2;2;2;2;2;2;2;2;1;4;2;2;3;2;4;2;2;2;2;4;2;2;2;2;2;3;2;1;2;1;1;2</doorsToNeighbors>
   <passableToNeighbors>1;1;0;0;1;1;1;0;1;2;0;1;0;1;1;1;3;2;2;2;2;1;1;2;1;1;2;0;1;2;2;1;1;1;0;1;0;1;0</passableToNeighbors>
   <lockedToNeighbors>0;0;1;1;0;0;0;0;0;0;1;0;1;0;0;0;1;0;0;1;0;1;1;0;0;0;0;1;0;0;0;0;1;1;1;0;0;0;0</lockedToNeighbors>

@@ -280,7 +280,7 @@ namespace ZeldaInfer {
             Dirichlet[, ,][] priorObserved = new Dirichlet[parent2States.SizeAsInt, parent3States.SizeAsInt, parent4States.SizeAsInt][];
             for (int p2 = 0; p2 < parent2States.SizeAsInt; p2++) {
                 for (int p3 = 0; p3 < parent3States.SizeAsInt; p3++) {
-                    for (int p4 = 0; p4 < parent3States.SizeAsInt; p3++) {
+                    for (int p4 = 0; p4 < parent3States.SizeAsInt; p4++) {
                         priorObserved[p2, p3, p4] = Enumerable.Repeat(Dirichlet.Uniform(node.states.SizeAsInt), parent1States.SizeAsInt).ToArray();
                     }
                 }

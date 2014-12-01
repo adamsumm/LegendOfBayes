@@ -33,28 +33,17 @@
   <oneWayDoorsOnPath>0</oneWayDoorsOnPath>
   <distanceToDungeonKey>-1</distanceToDungeonKey>
   <distanceToSpecialItem>4</distanceToSpecialItem>
-  <doorTypesFrom>_;_;_;_;_;_;_;l;_;l;b;k;l;l;k;_;_;_;_;_;l;_;b;l;_;l;_;k;_;b;k;l;_;b;b;b;k;_;b;b;k;l;l;_;b;b;b;l;_;_;l;l;_;l;_;_;b;_</doorTypesFrom>
-  <doorTypesTo>_;_;_;_;_;_;_;l;_;l;b;k;l;l;k;_;_;_;_;_;l;_;b;l;_;l;_;k;_;b;k;l;_;b;b;b;k;_;b;b;k;l;l;_;b;b;b;l;_;_;l;l;_;l;_;_;b;_</doorTypesTo>
+  <doorTypesFrom>_;_,_,_,_;_;_,l;_,l;b,k,l,l;k;_;_,_,_;_,l;_,b,l;_,l;_,k;_;b,k,l;_,b;b,b,k;_,b;b,k,l,l;_,b;b,b,l;_;_,l;l;_,l;_;_,b;_</doorTypesFrom>
+  <doorTypesTo>_;_,_,_,_;_;_,l;_,l;b,k,l,l;k;_;_,_,_;_,l;_,b,l;_,l;_,k;_;b,k,l;_,b;b,b,k;_,b;b,k,l,l;_,b;b,b,l;_;_,l;l;_,l;_;_,b;_</doorTypesTo>
   <crossings>1;2;0;2;2;1;0;0;0;0;1;0;1;0;2;1;2;1;2;0;1;1;1;0;2;1;1;1</crossings>
   <depth>0;1;2;3;2;9;10;11;10;24;23;11;10;12;11;13;12;14;15;25;24;25;22;16;16;4;8;17</depth>
   <distanceOfRoomToOptimalPath>0;0;1;0;0;0;1;2;1;1;0;2;0;3;0;0;0;0;0;1;0;0;0;1;0;0;0;0</distanceOfRoomToOptimalPath>
-  <neighborTypes>_;
-ekp;m;m;s;_;I;m;_;ep;
-eip;e;ek;m;
-ekp;ek;
-ekp;
-ekp;m;_;ek;b;ei;ekp;_;ek;
-ekp;ep;m;e;ei;im;ei;im;ep;i;mp;i;mp;ei;ei;ep;im;b;ekp;_;ek;t;b;ek;ep;mp;I;mp;ep;
-ekp;_;ep</neighborTypes>
+  <neighborTypes>_;ekp,m,m,s;_;I,m;_,ep;e,eip,ek,m;ekp;ek;ekp,ekp,m;_,ek;b,ei,ekp;_,ek;ekp,ep;m;e,ei,im;ei,im;ep,i,mp;i,mp;ei,ei,ep,im;b,ekp;_,ek,t;b;ek,ep;mp;I,mp;ep;_,ekp;ep</neighborTypes>
   <numberOfNeighbors>1;4;1;2;2;4;1;1;3;2;3;2;2;1;3;2;3;2;4;2;3;1;2;1;2;1;2;1</numberOfNeighbors>
-  <roomType>s;_;
-ekp;ep;m;
-ekp;
-eip;
-ekp;ek;ekp;ek;m;e;_;ep;i;im;ei;mp;_;b;t;ei;ei;ep;I;m;I</roomType>
+  <roomType>s;_;ekp;ep;m;ekp;eip;ekp;ek;ekp;ek;m;e;_;ep;i;im;ei;mp;_;b;t;ei;ei;ep;I;m;I</roomType>
   <enemyNeighbors>0;3;0;1;1;4;1;1;3;1;3;1;2;1;3;2;2;1;4;2;1;1;2;1;1;1;1;1</enemyNeighbors>
-  <puzzleNeighbors>0;0;1;1;0;0;0;1;1;0;1;2;1;1;0;1;2;2;0;1;1;2;0;1;2;1;0;0;0;2;0;2;2;1;1;1;1;3;1;1;0;1;0;0;1;1;1;0;1;1;1;0;1;1;1;0</puzzleNeighbors>
-  <itemNeighbors></itemNeighbors>
+  <puzzleNeighbors>0;1;0;0;1;1;1;0;2;0;1;0;2;0;0;0;2;1;1;1;0;0;1;1;1;1;1;1</puzzleNeighbors>
+  <itemNeighbors>0;1;0;1;0;2;1;1;2;1;2;1;1;0;2;2;1;1;3;1;1;0;1;0;1;0;1;0</itemNeighbors>
   <doorsToNeighbors>1;4;1;2;2;4;1;1;3;2;3;2;2;1;3;2;3;2;4;2;3;1;2;1;2;1;2;1</doorsToNeighbors>
   <passableToNeighbors>1;4;1;1;1;0;0;1;3;1;1;1;1;1;0;1;0;1;0;1;0;1;1;0;1;1;1;1</passableToNeighbors>
   <lockedToNeighbors>0;0;0;0;0;1;1;0;0;0;0;0;1;0;1;0;1;0;1;0;0;0;0;0;0;0;0;0</lockedToNeighbors>

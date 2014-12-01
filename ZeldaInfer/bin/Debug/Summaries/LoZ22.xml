@@ -33,17 +33,17 @@
   <oneWayDoorsOnPath>1</oneWayDoorsOnPath>
   <distanceToDungeonKey>-1</distanceToDungeonKey>
   <distanceToSpecialItem>11</distanceToSpecialItem>
-  <doorTypesFrom>_;_;_;_;_;_;_;l;l;_;_;b;_;k;l;_;_;k;_;l;O;b;b;k;_;b;k;_;_;_;_;_;_;k;k;l;_;_;s;_;_;k;k;_;b;l;_;_;_;b;s;_</doorTypesFrom>
-  <doorTypesTo>_;_;_;_;_;_;_;l;l;_;_;b;_;k;l;_;_;k;_;l;O;b;b;k;_;b;k;_;_;_;_;_;_;k;k;l;_;_;s;_;_;k;k;_;b;l;_;_;_;b;s;_</doorTypesTo>
+  <doorTypesFrom>_;_,_;_,_;_,_;l,l;_,_,b;_,k,l;_,_,k;_,l,O;b,b,k;_,b,k;_,_,_;_,_;_,k;k,l;_,_,s;_,_,k;k;_,b,l;_,_;_;b,s;_</doorTypesFrom>
+  <doorTypesTo>_;_,_;_,_;_,_;l,l;_,_,b;_,k,l;_,_,k;_,l,O;b,b,k;_,b,k;_,_,_;_,_;_,k;k,l;_,_,s;_,_,k;k;_,b,l;_,_;_;b,s;_</doorTypesTo>
   <crossings>1;1;1;1;1;1;2;2;2;1;0;2;0;1;1;1;1;0;1;1;1;0;1</crossings>
   <depth>0;1;2;19;18;17;3;4;5;16;5;10;18;20;21;9;8;9;6;7;22;7;11</depth>
   <distanceOfRoomToOptimalPath>0;0;0;0;0;0;0;0;0;0;1;0;1;0;0;0;0;1;0;0;0;1;0</distanceOfRoomToOptimalPath>
-  <neighborTypes>_;ek;s;_;e;eik;ek;ei;ekp;ei;ei;ek;ei;ek;ek;e;e;ek;_;ek;ep;e;ek;ekp;ei;ei;ek;e;e;I;ek;ekp;b;ei;eik;t;_;e;ek;e;eip;km;e;e;ek;km;e;ep;b;e;ep;_</neighborTypes>
+  <neighborTypes>_;ek,s;_,e;eik,ek;ei,ekp;ei,ei,ek;ei,ek,ek;e,e,ek;_,ek,ep;e,ek,ekp;ei,ei,ek;e,e,I;ek,ekp;b,ei;eik,t;_,e,ek;e,eip,km;e;e,ek,km;e,ep;b;e,ep;_</neighborTypes>
   <numberOfNeighbors>1;2;2;2;2;3;3;3;3;3;3;3;2;2;2;3;3;1;3;2;1;2;1</numberOfNeighbors>
   <roomType>s;_;ek;ei;ek;ekp;e;ek;e;ei;ek;_;ei;eik;b;e;e;eip;ep;km;t;ek;I</roomType>
   <enemyNeighbors>0;1;1;2;2;3;3;3;2;3;3;2;2;2;1;2;3;1;3;2;1;2;0</enemyNeighbors>
-  <puzzleNeighbors>0;0;0;1;0;0;0;2;1;2;0;3;0;3;0;1;1;1;1;2;0;3;0;1;1;2;0;1;0;1;0;1;1;2;0;0;0;2;1;0;0;0;1;0;0;0</puzzleNeighbors>
-  <itemNeighbors></itemNeighbors>
+  <puzzleNeighbors>0;0;0;0;1;0;0;0;1;1;0;0;1;0;0;0;1;0;0;1;0;1;0</puzzleNeighbors>
+  <itemNeighbors>0;1;0;2;2;3;3;1;1;2;3;1;2;1;1;1;2;0;2;0;0;0;0</itemNeighbors>
   <doorsToNeighbors>1;2;2;2;2;3;3;3;3;3;3;3;2;2;2;3;3;1;3;2;1;2;1</doorsToNeighbors>
   <passableToNeighbors>1;2;2;2;0;2;1;2;1;0;1;3;2;1;0;2;2;0;1;2;1;0;1</passableToNeighbors>
   <lockedToNeighbors>0;0;0;0;0;0;1;1;0;1;1;0;0;1;1;0;1;1;0;0;0;0;0</lockedToNeighbors>

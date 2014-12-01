@@ -33,22 +33,17 @@
   <oneWayDoorsOnPath>0</oneWayDoorsOnPath>
   <distanceToDungeonKey>-1</distanceToDungeonKey>
   <distanceToSpecialItem>18</distanceToSpecialItem>
-  <doorTypesFrom>_;_;_;_;_;_;k;l;_;_;b;_;_;k;k;b;k;_;k;k;k;_;_;b;b;k;_;_;b;b;b;b;l;b;_;_;b;_;_;_;_;b;_;b;b;k;s;b;k;_;k;l;l;_;l;_;_;_;l;_;_;l;_;b;l;_;l;_;b;l;b;k;l;b;l;b;l;b;b;b;b;l;b;b;_;b;k;k;b;k;_;_;k;_;_;k;_;k;b;l;k;k;k;l;b;l;b;k;k;l;k;k;l;k;l;k;k;b;b;s;_;b;k;b;l;_;_;_;_;b;b;_;_;b;_;_;b;k;k;s;k;s;_;_</doorTypesFrom>
-  <doorTypesTo>_;_;_;_;_;_;k;l;_;_;b;_;_;k;k;b;k;_;k;k;k;_;_;b;b;k;_;_;b;b;b;b;l;b;_;_;b;_;_;_;_;b;_;b;b;k;s;b;k;_;k;l;l;_;l;_;_;_;l;_;_;l;_;b;l;_;l;_;b;l;b;k;l;b;l;b;l;b;b;b;b;l;b;b;_;b;k;k;b;k;_;_;k;_;_;k;_;k;b;l;k;k;k;l;b;l;b;k;k;l;k;k;l;k;l;k;k;b;b;s;_;b;k;b;l;_;_;_;_;b;b;_;_;b;_;_;b;k;k;s;k;s;_;_</doorTypesTo>
+  <doorTypesFrom>_;_,_,_;_,_;k,l;_,_,b;_,_;k,k;b,k;_,k,k,k;_,_,b;b,k;_,_;b,b,b,b,l;b;_,_,b;_,_;_,_,b;_,b;b;k,s;b,k;_,k;l,l;_,l;_,_,_,l;_;_,l;_,b,l;_,l;_,b,l;b,k,l;b,l;b,l;b,b,b;b,l;b,b;_,b,k,k;b,k;_,_,k;_,_,k;_,k;b,l;k,k;k,l;b,l;b,k,k;l;k,k,l;k,l;k,k;b,b,s;_,b,k;b,l;_;_,_;_,b,b;_,_,b;_,_;b,k,k,s;k,s;_;_</doorTypesFrom>
+  <doorTypesTo>_;_,_,_;_,_;k,l;_,_,b;_,_;k,k;b,k;_,k,k,k;_,_,b;b,k;_,_;b,b,b,b,l;b;_,_,b;_,_;_,_,b;_,b;b;k,s;b,k;_,k;l,l;_,l;_,_,_,l;_;_,l;_,b,l;_,l;_,b,l;b,k,l;b,l;b,l;b,b,b;b,l;b,b;_,b,k,k;b,k;_,_,k;_,_,k;_,k;b,l;k,k;k,l;b,l;b,k,k;l;k,k,l;k,l;k,k;b,b,s;_,b,k;b,l;_;_,_;_,b,b;_,_,b;_,_;b,k,k,s;k,s;_;_</doorTypesTo>
   <crossings>1;1;1;0;0;0;0;0;2;1;0;0;1;0;0;0;1;0;0;0;0;2;1;1;2;0;0;1;0;1;1;2;2;3;2;2;2;2;3;2;0;1;0;0;1;1;1;0;0;0;0;2;2;1;2;2;0;0;1;0;1;1</crossings>
   <depth>0;2;1;28;5;4;27;27;26;3;11;4;4;8;5;6;42;43;28;45;44;27;51;50;28;47;29;46;46;45;47;30;29;9;17;16;8;24;7;5;46;48;44;47;49;44;52;45;49;48;7;6;25;12;11;10;3;29;43;9;18;31</depth>
   <distanceOfRoomToOptimalPath>0;0;0;2;1;2;1;1;0;0;1;1;0;2;1;2;0;1;2;3;2;0;0;0;0;1;1;0;1;0;0;0;0;0;0;0;0;0;0;0;2;0;1;2;0;0;0;1;2;1;1;0;0;0;0;0;1;1;0;1;0;0</distanceOfRoomToOptimalPath>
-  <neighborTypes>_;_;ekp;ep;_;s;_;e;e;e;mp;e;ep;e;mp;_;e;e;e;ep;ep;_;e;mp;e;eip;e;ekp;e;e;e;ekp;ep;e;e;e;mp;e;e;e;e;ep;e;ep;ep;e;e;e;ep;
-ekp;e;e;t;b;ep;_;e;e;ep;e;
-ekp;e;e;ep;ep;e;ep;e;e;m;e;ep;ep;ep;I;
-ekp;ep;e;e;eip;e;I;ep;i;_;e;ei;i;ei;ep;_;e;ep;ep;ep;mp;ep;m;ep;ep;e;m;_;m;e;ep;e;e;m;b;_;e;e;e;ep;e;ep;_;ei;ep;e;e;ei;_;e;ek;eip;ekp;e;ek;i;_;e;mp;
-ekp;mp;e;e;e;ep;e;e;ep;ep</neighborTypes>
+  <neighborTypes>_;_,ekp,ep;_,s;_,e;e,e,mp;e,ep;e,mp;_,e;e,e,ep,ep;_,e,mp;e,eip;e,ekp;e,e,e,ekp,ep;e;e,e,mp;e,e;e,e,ep;e,ep;ep;e,e;e,ep;e,ekp;e,t;b,ep;_,e,e,ep;e;e,ekp;e,ep,ep;e,ep;e,e,m;e,ep,ep;ep,I;ekp,ep;e,e,eip;e,I;ep,i;_,e,ei,i;ei,ep;_,e,ep;ep,ep,mp;ep,m;ep,ep;e,m;_,m;e,ep;e,e,m;b;_,e,e;e,ep;e,ep;_,ei,ep;e,e,ei;_,e;ek;eip,ekp;e,ek,i;_,e,mp;ekp,mp;e,e,e,ep;e,e;ep;ep</neighborTypes>
   <numberOfNeighbors>1;3;2;2;3;2;2;2;4;3;2;2;5;1;3;2;3;2;1;2;2;2;2;2;4;1;2;3;2;3;3;2;2;3;2;2;4;2;3;3;2;2;2;2;2;3;1;3;2;2;3;3;2;1;2;3;3;2;4;2;1;1</numberOfNeighbors>
-  <roomType>s;_;_;mp;e;e;e;ep;e;ekp;e;e;mp;ei;e;e;ep;ep;_;e;e;e;b;e;
-ekp;ep;e;e;m;e;ep;ep;ep;i;ep;e;e;_;ei;e;_;ep;e;ep;ep;e;t;m;e;ep;e;ep;ep;ekp;ek;eip;ep;_;e;_;I;I</roomType>
+  <roomType>s;_;_;mp;e;e;e;ep;e;ekp;e;e;mp;ei;e;e;ep;ep;_;e;e;e;b;e;ekp;ep;e;e;m;e;ep;ep;ep;i;ep;e;e;_;ei;e;_;ep;e;ep;ep;e;t;m;e;ep;e;ep;ep;ekp;ek;eip;ep;_;e;_;I;I</roomType>
   <enemyNeighbors>0;2;0;1;3;2;2;1;4;2;2;2;5;1;3;2;3;2;1;2;2;2;1;2;3;1;2;3;2;3;3;1;2;3;1;1;2;2;2;3;2;2;2;1;2;3;1;2;2;2;2;3;1;1;2;2;2;2;4;2;1;1</enemyNeighbors>
-  <puzzleNeighbors>0;0;2;1;0;0;0;0;1;0;1;0;1;0;0;0;2;0;1;0;1;1;1;1;2;1;0;0;1;0;0;0;1;0;1;0;1;0;0;0;1;0;1;1;0;0;1;0;1;0;0;0;1;1;2;0;1;0;0;0;2;0;1;1;2;1;1;1;0;1;1;1;0;2;1;1;1;0;3;0;1;0;2;0;0;0;0;0;1;0;0;0;0;0;0;0;1;0;1;0;1;1;0;1;0;0;0;1;2;2;0;2;1;0;2;1;1;0;0;0;1;0;1;0</puzzleNeighbors>
-  <itemNeighbors></itemNeighbors>
+  <puzzleNeighbors>0;2;0;0;1;1;1;0;2;1;1;1;2;0;1;0;1;1;1;0;1;1;0;1;1;0;1;2;1;0;2;1;2;1;0;1;0;1;1;3;1;2;0;0;1;0;0;0;1;1;1;0;0;0;2;0;1;2;1;0;1;1</puzzleNeighbors>
+  <itemNeighbors>0;1;0;0;0;0;0;0;0;0;1;1;1;0;0;0;0;0;0;0;0;1;0;0;0;0;1;0;0;0;0;1;1;1;1;1;2;1;0;0;0;0;0;0;0;0;0;0;0;0;1;1;0;1;2;2;0;1;0;0;0;0</itemNeighbors>
   <doorsToNeighbors>1;3;2;2;3;2;2;2;4;3;2;2;5;1;3;2;3;2;1;2;2;2;2;2;4;1;2;3;2;3;3;2;2;3;2;2;4;2;3;3;2;2;2;2;2;3;1;3;2;2;3;3;2;1;2;3;3;2;4;2;1;1</doorsToNeighbors>
   <passableToNeighbors>1;3;2;0;2;2;0;0;1;2;0;2;0;0;2;2;2;1;0;0;0;1;0;1;3;1;1;1;1;1;0;0;0;0;0;0;1;0;2;2;1;0;0;0;0;0;0;0;0;0;0;1;0;1;2;1;2;2;0;0;1;1</passableToNeighbors>
   <lockedToNeighbors>0;0;0;1;0;0;2;1;3;0;1;0;0;0;0;0;0;0;0;1;1;1;0;0;0;0;0;0;0;0;1;0;0;0;0;0;2;1;1;1;1;0;2;1;0;2;0;2;1;2;0;1;0;0;0;0;0;0;2;1;0;0</lockedToNeighbors>

@@ -227,6 +227,7 @@ namespace ZeldaInfer.LevelParse {
         protected static string cleanString(string str) {
             str = Regex.Replace(str, @"\d+", "");
             str = Regex.Replace(str, " ", "");
+            str = Regex.Replace(str, "\n", "");
             str = Regex.Replace(str, ",", "");
             str = String.Join("", str.Distinct());
             char[] c = str.ToCharArray();
@@ -322,7 +323,7 @@ namespace ZeldaInfer.LevelParse {
                 } 
                  roomStatistics["enemyNeighbors"].Add(""+enemyCount);
                  roomStatistics["puzzleNeighbors"].Add("" + puzzleCount);
-                 roomStatistics["puzzleNeighbors"].Add("" + itemCount);
+                 roomStatistics["itemNeighbors"].Add("" + itemCount);
                 Dictionary<string,int> doorStats = new Dictionary<string,int>(){
                     {"doorsToNeighbors",0},
                     {"passableToNeighbors",0},
@@ -385,9 +386,9 @@ namespace ZeldaInfer.LevelParse {
                 Array.Sort(neighborTypes);
                 Array.Sort(doorToTypes);
                 Array.Sort(doorFromTypes);
-                roomStatistics["doorTypesTo"].Add(String.Join(";", doorToTypes));
-                roomStatistics["doorTypesFrom"].Add(String.Join(";", doorFromTypes));
-                roomStatistics["neighborTypes"].Add(String.Join(";",neighborTypes));
+                roomStatistics["doorTypesTo"].Add(String.Join(",", doorToTypes));
+                roomStatistics["doorTypesFrom"].Add(String.Join(",", doorFromTypes));
+                roomStatistics["neighborTypes"].Add(String.Join(",",neighborTypes));
               //  roomStatistics["neighborTypes"].Add(cleanString(type));
                 roomStatistics["distanceOfRoomToOptimalPath"].Add("" + room.detour);
                 roomStatistics["depth"].Add("" + room.depth);
