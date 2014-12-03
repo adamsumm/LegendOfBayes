@@ -19,7 +19,6 @@ namespace ZeldaInfer {
         public abstract void Infer(InferenceEngine engine);
         public static void CreateDistributionsNode(ModelNode node, Range N) {
 
-
             if (node.parents.Count == 0) {
                 node.distributions = new NoParentNode(node);
             }
@@ -52,6 +51,7 @@ namespace ZeldaInfer {
             VariableArray<Vector> cpt) {
             var n = parent.Range;
             var child = Variable.Array<int>(n);
+          
             using (Variable.ForEach(n))
             using (Variable.Switch(parent[n]))
                 child[n] = Variable.Discrete(cpt[parent[n]]);

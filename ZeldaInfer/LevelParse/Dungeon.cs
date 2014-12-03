@@ -409,7 +409,7 @@ namespace ZeldaInfer.LevelParse {
                 foreach (var door in room.doors){
                     string doorLock = door.OtherLock(room); 
                     dungeonStatistics["doorsInLevel"] += 1;
-                    dungeonStatistics["passableDoorsInLevel"] += doorLock == "" ? 1 : 0;
+                    dungeonStatistics["passableDoorsInLevel"] += doorLock == "_" ? 1 : 0;
                     dungeonStatistics["lockedDoorsInLevel"] += doorLock.Contains("k") ? 1 : 0;
                     dungeonStatistics["bombLockedDoorsInLevel"] += doorLock.Contains("b") ? 1 : 0;
                     dungeonStatistics["itemLockedDoorsInLevel"] += doorLock.Contains("I") ? 1 : 0;

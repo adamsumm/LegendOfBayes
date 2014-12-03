@@ -90,7 +90,6 @@ namespace ZeldaInfer {
                 kvPair.Value.distributions.Observed.ObservedValue = observedData[kvPair.Key];
                 numberOfEntries = observedData[kvPair.Key].Length;
             }
-            SwitchBlock block;
             NumberOfExamples.ObservedValue = numberOfEntries;
             foreach (ModelNode node in nodes.Values) {
                 node.distributions.Infer(Engine);

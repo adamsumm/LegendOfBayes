@@ -31,20 +31,20 @@ namespace ZeldaInfer {
 		 
 		static void RunAllLevels() {
 			string[] levels = new string[]{
-                //"Levels/LA 1.xml","Levels/LA 2.xml","Levels/LA 3.xml","Levels/LA 4.xml",
-                //"Levels/LA 6.xml","Levels/LA 7.xml",
-                //"Levels/LA 8.xml","Levels/LoZ 1.xml",
-                //"Levels/LoZ 2.xml","Levels/LoZ 3.xml","Levels/LoZ 4.xml","Levels/LoZ 5.xml",
-                //"Levels/LoZ 7.xml","Levels/LoZ 8.xml","Levels/LoZ 9.xml","Levels/LoZ2 1.xml",
-                //"Levels/LoZ2 2.xml","Levels/LoZ2 4.xml","Levels/LoZ2 5.xml","Levels/LoZ2 6.xml",
-                //"Levels/LoZ2 7.xml","Levels/LoZ2 8.xml",
-                //"Levels/LoZ2 9.xml",
+                "Levels/LA 1.xml","Levels/LA 2.xml","Levels/LA 3.xml","Levels/LA 4.xml",
+                "Levels/LA 6.xml","Levels/LA 7.xml",
+                "Levels/LA 8.xml","Levels/LoZ 1.xml",
+                "Levels/LoZ 2.xml","Levels/LoZ 3.xml","Levels/LoZ 4.xml","Levels/LoZ 5.xml",
+                "Levels/LoZ 7.xml","Levels/LoZ 8.xml","Levels/LoZ 9.xml","Levels/LoZ2 1.xml",
+                "Levels/LoZ2 2.xml","Levels/LoZ2 4.xml","Levels/LoZ2 5.xml","Levels/LoZ2 6.xml",
+                "Levels/LoZ2 7.xml","Levels/LoZ2 8.xml",
+                "Levels/LoZ2 9.xml",
                 "Levels/LttP 1.xml",
-                //"Levels/LttP 10.xml",
-                //"Levels/LttP 11.xml",
-                //"Levels/LttP 2.xml","Levels/LttP 3.xml",
-                //"Levels/LttP 4.xml","Levels/LttP 5.xml","Levels/LttP 6.xml","Levels/LttP 7.xml",
-                //"Levels/LttP 8.xml","Levels/LttP 9.xml",
+                "Levels/LttP 10.xml",
+                "Levels/LttP 11.xml",
+                "Levels/LttP 2.xml","Levels/LttP 3.xml",
+                "Levels/LttP 4.xml","Levels/LttP 5.xml","Levels/LttP 6.xml","Levels/LttP 7.xml",
+                "Levels/LttP 8.xml","Levels/LttP 9.xml",
 			};
 
 			foreach (var level in levels) {
@@ -89,6 +89,7 @@ namespace ZeldaInfer {
             };
             Dictionary<string, string> summaryDictionary = new Dictionary<string, string>();
             int totalCount = 0;
+            string str = "";
             foreach (var summary in summaries) {
                 XDocument summaryDoc = XDocument.Load(summary);
                 Dictionary<string, string> levelParams = new Dictionary<string, string>();
@@ -96,6 +97,9 @@ namespace ZeldaInfer {
                 int copies = 0;
                 foreach (XElement element in summaryDoc.Root.Descendants()) {
                     if (wholeLevelParameters.Contains(element.Name.LocalName)) {
+                        if (element.Name.LocalName == "pathLength") {
+                            str += element.Value + ",";
+                        }
                         levelParams[element.Name.LocalName] = element.Value;
                     }
                     else {
@@ -129,6 +133,8 @@ namespace ZeldaInfer {
                     }
                 }
             }
+
+            Console.WriteLine("depth = " + str);
             XDocument categoriesDoc = new XDocument(new XElement("root"));
             Console.WriteLine(totalCount);
             Dictionary<string, List<string>> categories = new Dictionary<string, List<string>>();
@@ -174,10 +180,8 @@ namespace ZeldaInfer {
             dungeonDoc.Save("dungeonNetwork.xml");
             XDocument dataDoc = new XDocument(new XElement("root"));
             foreach (var param in summaryDictionary) {
-                int subtract = 1;
-                
                 dataDoc.Root.Add(new XElement("Data", new XAttribute("name", param.Key),string.Join(",",param.Value.Substring(0,param.Value.Length-1).Split(';').Select(p => categories[param.Key].IndexOf(p)))  ));
-                
+              //  Console.WriteLine(param.Key + " = [" + string.Join(",",param.Value.Substring(0,param.Value.Length-1).Split(';')) + "]");
             }
             dataDoc.Save("dungeonNetworkData.xml");
 		}
@@ -190,10 +194,10 @@ namespace ZeldaInfer {
         }
 
 		static void Main(string[] args) {
-           // RunAllLevels();
+      //      RunAllLevels();
             CreateGraphicalModelFiles();
-            CreateGraphicalModel();
-        //    ModelNetworkSprinklerFile();
+           // CreateGraphicalModel();
+            InferTest.Test();
 			Console.WriteLine("ALL DONE :)");
 			Console.Read();
 		}
