@@ -25,7 +25,7 @@ namespace ZeldaInfer {
 
 			GraphicalModel model = new GraphicalModel("WetRainSprinkler.xml");
 			model.CreateNetwork();
-			Dictionary<string, int[]> observedData = GraphicalModel.LoadData("WetRainSprinklerData.xml");
+			Dictionary<string, Tuple<int[],double[]>> observedData = GraphicalModel.LoadData("WetRainSprinklerData.xml");
 			model.LearnParameters(observedData);
 		}
 		 
@@ -189,7 +189,7 @@ namespace ZeldaInfer {
 
             GraphicalModel model = new GraphicalModel("dungeonNetwork.xml");
             model.CreateNetwork();
-            Dictionary<string, int[]> observedData = GraphicalModel.LoadData("dungeonNetworkData.xml");
+            Dictionary<string, Tuple<int[],double[]>> observedData = GraphicalModel.LoadData("dungeonNetworkData.xml");
             model.LearnParameters(observedData);
         }
 
@@ -197,7 +197,7 @@ namespace ZeldaInfer {
       //      RunAllLevels();
             CreateGraphicalModelFiles();
            // CreateGraphicalModel();
-            InferTest.Test();
+            InferTest.Test2();
 			Console.WriteLine("ALL DONE :)");
 			Console.Read();
 		}

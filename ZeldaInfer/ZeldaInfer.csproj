@@ -65,6 +65,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BayesPointMachine\BPMUtils.cs" />
+    <Compile Include="BayesPointMachine\BPM.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="GraphicalModel.cs" />
     <Compile Include="InferFactors.cs" />

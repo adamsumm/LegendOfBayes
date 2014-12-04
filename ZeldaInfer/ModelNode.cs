@@ -11,19 +11,26 @@ using MicrosoftResearch.Infer.Maths;
 
 namespace ZeldaInfer
 {
+    public enum DistributionType {
+        Categorical,
+        Numerical
+    }
+
     public class ModelNode
     {   
         public Range states;
         public string name;
+        public DistributionType distributionType;
         public List<ModelNode> parents;
         public List<ModelNode> children;
         public DistributionsNode distributions;
-        public ModelNode(string name, Range states)
+        public ModelNode(string name, Range states,string domain)
         {
             this.name = name;
             this.states = states;
             parents = new List<ModelNode>();
             children = new List<ModelNode>();
+            distributionType = (DistributionType) Enum.Parse(typeof(DistributionType), domain);
         }
         public void AddParent(ModelNode parent){
             parents.Add(parent);
