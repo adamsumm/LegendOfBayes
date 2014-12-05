@@ -88,6 +88,7 @@ namespace ZeldaInfer {
                     }
                     else if (numCategorical == 0){
                         //Bayes Linear Regression
+                        node.distributions = new LinearRegression(node);
                     }
                     else {
                         //Ooh boy don't know what to do here
@@ -292,9 +293,12 @@ namespace ZeldaInfer {
         }
         public override string PosteriorToString() {
             string str = "";
+            /*
             for (int ii = 0; ii < node.states.SizeAsInt - 1; ii++) {
           //      str += node.name + " P(" + ii + ") = " + ProbPosterior.GetMean()[ii] + "\n";
             }
+             */
+            str += node.name + " N(" + meanPosterior.GetMean() + ", " + precPosterior.GetMean() + ")\n";
             return str;
         }
         public override void SetObservedData(Tuple<int[], double[]> observedValues) {
@@ -372,6 +376,62 @@ namespace ZeldaInfer {
             p[N] = Variable.Softmax(g[N]);
             using (Variable.ForEach(N))
                 Observed[N] = Variable.Discrete(p[N]);
+        }
+    }
+
+    public class LinearRegression : DistributionsNode {
+        public Variable<VectorGaussian> Bprior;
+        public Variable<Vector> B;
+        public VariableArray<Vector> x;
+        VectorGaussian bPost;
+        //  VariableArray<VariableArray<int>, int[][]> yData;
+        override public int ParentCount() {
+            return 0;
+        }
+        public LinearRegression(ModelNode node) {
+            this.node = node;
+            Bprior = Variable.New<VectorGaussian>().Named(node.name + "CoefficientsPrior");
+            Bprior.ObservedValue =VectorGaussian.FromMeanAndPrecision(
+                Vector.Zero(node.parents.Count+1), PositiveDefiniteMatrix.Identity(node.parents.Count+1));
+            B = Variable<Vector>.Random(Bprior).Named(node.name + "Coefficients");
+
+
+        }
+        public override void AddParents() {
+            ObservedNumerical = Variable.Array<double>(N).Named(node.name);
+            //Variable.Multinomial(trialsCount[N], p[N]);
+        }
+        public override void Infer(InferenceEngine engine) {
+            bPost = engine.Infer<VectorGaussian>(B);
+        }
+        public override void SetPriorToPosterior() {
+            Bprior.ObservedValue = bPost;
+        }
+        public override string PosteriorToString() {
+            string str = "";
+
+            str += node.name + bPost.GetMean() + "\n";
+          
+            return str;
+        }
+
+        public override void SetObservedData(Tuple<int[], double[]> observedValues) {
+            Range parentRange = new Range(node.parents.Count+1);
+
+            x = Variable.Array<Vector>(N).Named("x" + node.name);
+            ObservedNumerical.ObservedValue = observedValues.Item2;
+            for (int ii = 0; ii < observedValues.Item2.Length; ii++) {
+                //double[] row = new double[node.parents.Count];
+                VariableArray<double> row = Variable<double>.Array(parentRange);
+                row[0] = 1;
+                for (int jj =0; jj < node.parents.Count; jj++) {
+                    row[jj+1] = (node.parents[jj].distributions.ObservedNumerical[ii]);
+                }
+                x[ii] = Variable.Vector(row);
+            }
+
+          //  var g = Variable<double>.Array(N).Named("g" + node.name);
+            ObservedNumerical[N] = Variable.GaussianFromMeanAndVariance(Variable.InnerProduct(B, x[N]),1.0);
         }
     }
     public class OneCategoricalParentNodeCategorical : DistributionsNode {

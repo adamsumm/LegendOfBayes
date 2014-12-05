@@ -23,9 +23,9 @@ namespace ZeldaInfer {
 		
 		static void ModelNetworkSprinklerFile() {
 
-			GraphicalModel model = new GraphicalModel("WetRainSprinkler.xml");
+			GraphicalModel model = new GraphicalModel("WetRainSprinkler3.xml");
 			model.CreateNetwork();
-			Dictionary<string, Tuple<int[],double[]>> observedData = GraphicalModel.LoadData("WetRainSprinklerData.xml");
+			Dictionary<string, Tuple<int[],double[]>> observedData = GraphicalModel.LoadData("WetRainSprinklerData2.xml");
 			model.LearnParameters(observedData);
 		}
 		 
@@ -197,7 +197,7 @@ namespace ZeldaInfer {
       //      RunAllLevels();
          //   CreateGraphicalModelFiles();
            // CreateGraphicalModel();
-            InferTest.Test2();
+          //  InferTest.Test2();
             ModelNetworkSprinklerFile();
 			Console.WriteLine("ALL DONE :)");
 			Console.Read();

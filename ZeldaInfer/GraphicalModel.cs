@@ -92,7 +92,7 @@ namespace ZeldaInfer {
                    // kvPair.Value.distributions.Observed.ObservedValue = observedData[kvPair.Key].Item1;
                     numberOfEntries = observedData[kvPair.Key].Item1.Length;
                 }
-                else if (kvPair.Value.distributionType == DistributionType.Categorical) {
+                else if (kvPair.Value.distributionType == DistributionType.Numerical) {
                   //  kvPair.Value.distributions.ObservedNumerical.ObservedValue = observedData[kvPair.Key].Item2;
                     numberOfEntries = observedData[kvPair.Key].Item2.Length;
                 }
