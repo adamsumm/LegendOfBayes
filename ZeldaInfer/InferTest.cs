@@ -34,9 +34,10 @@ namespace ZeldaInfer {
                 xdata[i] = Vector.FromArray(observed[i], pathObserved[i]);
 
             Range range = new Range(observed.Length);
-            
 
-            Variable<double> roomsMean = Variable.GaussianFromMeanAndVariance(0, 100).Named("room Mean");
+
+            Variable<Gaussian> meanPrior = Gaussian.FromMeanAndVariance(0, 100);
+            Variable<double> roomsMean = Variable<double>.Random(meanPrior).Named("room Mean");
             Variable<double> roomsStd = Variable.GammaFromMeanAndVariance(2,2).Named("room sigma");
             VariableArray<double> observedVar = Variable.Array<double>(range).Named("observedVar");
             Variable<double> roomGauss = Variable.GaussianFromMeanAndPrecision(roomsMean, roomsStd).Named("roomGauss");

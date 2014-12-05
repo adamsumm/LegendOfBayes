@@ -17,12 +17,12 @@ namespace ZeldaInfer {
         Dictionary<string, ModelNode> independentNodes = new Dictionary<string,ModelNode>();
         Dictionary<string, Tuple<string[], Range>> rangeCategories = new Dictionary<string,Tuple<string[],Range>>();
         public Variable<int> NumberOfExamples;
-        public InferenceEngine Engine = new InferenceEngine();
+        public InferenceEngine Engine = new InferenceEngine(new VariationalMessagePassing());
         public GraphicalModel() {}
         public GraphicalModel(string filename) {
             XDocument xdoc = XDocument.Load(filename);
             List<Tuple<string, string>> edges = new List<Tuple<string, string>>();
-            List<Tuple<string, string>> nodeParams = new List<Tuple<string, string>>();
+            List<Tuple<string, string, string>> nodeParams = new List<Tuple<string, string, string>>();
             foreach (var element in xdoc.Descendants()){
                 switch (element.Name.ToString()) {
                     case "Category":
@@ -34,12 +34,12 @@ namespace ZeldaInfer {
                         edges.Add(new Tuple<string, string>(element.Attribute("parent").Value, element.Attribute("child").Value));
                         break;
                     case "Node":
-                        nodeParams.Add(new Tuple<string, string>(element.Attribute("name").Value, element.Attribute("category").Value));
+                        nodeParams.Add(new Tuple<string, string, string>(element.Attribute("name").Value, element.Attribute("category").Value, element.Attribute("domain").Value));
                         break;
                 }
             }
             foreach (var node in nodeParams) {
-                AddNode(new ModelNode(node.Item1, rangeCategories[node.Item2].Item2));
+                AddNode(new ModelNode(node.Item1, rangeCategories[node.Item2].Item2,node.Item3));
             }
             foreach (var edge in edges) {
                 AddLink(nodes[edge.Item1], nodes[edge.Item2]);
@@ -84,11 +84,20 @@ namespace ZeldaInfer {
                 }
             }
         }
-        public void LearnParameters(Dictionary<string,int[]> observedData){
+        public void LearnParameters(Dictionary<string, Tuple<int[], double[]>> observedData) {
             int numberOfEntries = 0;
             foreach (KeyValuePair<string,ModelNode> kvPair in nodes){
-                kvPair.Value.distributions.Observed.ObservedValue = observedData[kvPair.Key];
-                numberOfEntries = observedData[kvPair.Key].Length;
+                
+                if (kvPair.Value.distributionType == DistributionType.Categorical) { 
+                   // kvPair.Value.distributions.Observed.ObservedValue = observedData[kvPair.Key].Item1;
+                    numberOfEntries = observedData[kvPair.Key].Item1.Length;
+                }
+                else if (kvPair.Value.distributionType == DistributionType.Categorical) {
+                  //  kvPair.Value.distributions.ObservedNumerical.ObservedValue = observedData[kvPair.Key].Item2;
+                    numberOfEntries = observedData[kvPair.Key].Item2.Length;
+                }
+                
+                kvPair.Value.distributions.SetObservedData(observedData[kvPair.Key]);
             }
             NumberOfExamples.ObservedValue = numberOfEntries;
             foreach (ModelNode node in nodes.Values) {
@@ -98,12 +107,20 @@ namespace ZeldaInfer {
                 Console.WriteLine(node.distributions.PosteriorToString());
             }
         }
-        public static Dictionary<string, int[]> LoadData(string filename) {
-            Dictionary<string, int[]> data = new Dictionary<string, int[]>();
+        public static Dictionary<string, Tuple<int[],double[]>> LoadData(string filename) {
+            Dictionary<string, Tuple<int[], double[]>> data = new Dictionary<string, Tuple<int[], double[]>>();
             XDocument xdoc = XDocument.Load(filename);
             foreach (XElement element in xdoc.Root.Elements()) {
                 string[] stringData = element.Value.Split(',');
-                data[element.Attribute("name").Value] = Array.ConvertAll(stringData, int.Parse);
+                if (element.Attribute("domain").Value == "Numerical") {
+                    data[element.Attribute("name").Value] = new Tuple<int[], double[]>(null,Array.ConvertAll(stringData, double.Parse));
+                }
+                else if (element.Attribute("domain").Value == "Categorical") {
+                    data[element.Attribute("name").Value] = new Tuple<int[],double[]>(Array.ConvertAll(stringData, int.Parse),null);
+                }
+                else {
+                    throw new ArgumentException("domain must be either 'Numerical' or 'Categorical'");
+                }
             }
             return data;
         }

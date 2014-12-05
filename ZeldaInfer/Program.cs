@@ -195,9 +195,10 @@ namespace ZeldaInfer {
 
 		static void Main(string[] args) {
       //      RunAllLevels();
-            CreateGraphicalModelFiles();
+         //   CreateGraphicalModelFiles();
            // CreateGraphicalModel();
             InferTest.Test2();
+            ModelNetworkSprinklerFile();
 			Console.WriteLine("ALL DONE :)");
 			Console.Read();
 		}

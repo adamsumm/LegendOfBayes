@@ -254,26 +254,29 @@ namespace ZeldaInfer {
         }
     }
     public class NoParentNodeNumerical : DistributionsNode {
-        Variable<Gaussian> meanPrior;
-        Variable<Gamma> precisionPrior;  
+        public Variable<Gaussian> meanPrior;
+        public Variable<Gamma> precPrior;
         Variable<double> mean;
-        Variable<double> precision;
+        Variable<double> prec;
         Variable<double> val;
+
         public Gaussian meanPosterior;
-        public Gamma precisionPosterior;
-        public Gaussian valPosterior;
+        public Gamma precPosterior;
         override public int ParentCount() {
             return 0;
         }
         public NoParentNodeNumerical(ModelNode node) {
             this.node = node;
-            meanPrior = Variable.New<Gaussian>().Named(node.name + "mean" + "Prior");
-            meanPrior.ObservedValue = Gaussian.FromMeanAndPrecision(0, 100);
-            precisionPrior = Variable.New<Gamma>().Named(node.name + "prec" + "Prior");
-            precisionPrior.ObservedValue = Gamma.FromShapeAndScale(1, 1);
-            mean = Variable<double>.Random(meanPrior).Named(node.name + "mean");
-            precision = Variable<double>.Random(precisionPrior).Named(node.name + "prec" );
-            val = Variable.GaussianFromMeanAndPrecision(mean, precision).Named(node.name + "val");
+            meanPrior = Gaussian.FromMeanAndVariance(0, 100);//Variable.New<Gaussian>().Named(node.name + "Prior");
+            precPrior = Gamma.FromMeanAndVariance(1, 1);
+            meanPrior.Named(node.name + "MeanPrior");
+            precPrior.Named(node.name + "PrecPrior");
+            mean = Variable<double>.Random(meanPrior).Named(node.name + "Mean");
+            prec = Variable<double>.Random(precPrior).Named(node.name + "Prec");
+            // meanPrior.ObservedValue = Gaussian.FromMeanAndVariance(0, 100);
+           // precPrior = Variable.New<Gamma>().Named(node.name + "Prior");
+          //  precPrior.ObservedValue = Gamma.FromMeanAndVariance(0, 100);
+            val = Variable.GaussianFromMeanAndPrecision(mean, prec).Named(node.name + "val");
         }
         public override void AddParents() {
             ObservedNumerical = Variable.Array<double>(N).Named(node.name);
@@ -281,12 +284,11 @@ namespace ZeldaInfer {
         }
         public override void Infer(InferenceEngine engine) {
             meanPosterior = engine.Infer<Gaussian>(mean);
-            precisionPosterior = engine.Infer<Gamma>(precision);
-            valPosterior = engine.Infer<Gaussian>(val);
+            precPosterior = engine.Infer<Gamma>(prec);
         }
         public override void SetPriorToPosterior() {
             meanPrior.ObservedValue = meanPosterior;
-            precisionPrior.ObservedValue = precisionPosterior;
+            precPrior.ObservedValue = precPosterior;
         }
         public override string PosteriorToString() {
             string str = "";
@@ -296,7 +298,7 @@ namespace ZeldaInfer {
             return str;
         }
         public override void SetObservedData(Tuple<int[], double[]> observedValues) {
-            Observed.ObservedValue = observedValues.Item1;
+            ObservedNumerical.ObservedValue = observedValues.Item2;
         }
 
     }
@@ -305,19 +307,23 @@ namespace ZeldaInfer {
         public VariableArray<Gaussian> mPrior;
         public VariableArray<Vector> B;
         public VariableArray<double> m;
+        public VariableArray<Vector> x;
         VectorGaussian[] bPost;
         Gaussian[] mPost;
-        VariableArray<VariableArray<int>, int[][]> yData;
+      //  VariableArray<VariableArray<int>, int[][]> yData;
         override public int ParentCount() {
             return 0;
         }
         public SoftmaxCategorical(ModelNode node) {
             this.node = node;
             Bprior = Variable.Array<VectorGaussian>(node.states).Named(node.name + "CoefficientsPrior");
+            Bprior.ObservedValue = Enumerable.Repeat(VectorGaussian.FromMeanAndPrecision(
+                Vector.Zero(node.parents.Count), PositiveDefiniteMatrix.Identity(node.parents.Count)),node.states.SizeAsInt).ToArray();
             B = Variable.Array<Vector>(node.states).Named(node.name + "Coefficients");
             // The weight vector for each class.
             B[node.states] = Variable<Vector>.Random(Bprior[node.states]);
             mPrior = Variable.Array<Gaussian>(node.states).Named(node.name + "BiasPrior");
+            mPrior.ObservedValue = Enumerable.Repeat(Gaussian.FromMeanAndVariance(0, 100), node.states.SizeAsInt).ToArray();
             m = Variable.Array<double>(node.states).Named(node.name+"Bias");
             m[node.states] = Variable<double>.Random(mPrior[node.states]);
             Variable.ConstrainEqualRandom(B[node.states.SizeAsInt - 1], VectorGaussian.PointMass(Vector.Zero(node.parents.Count)));
@@ -326,24 +332,9 @@ namespace ZeldaInfer {
             
         }
         public override void AddParents() {
-            Range parentRange = new Range(node.parents.Count);
-            var x = Variable.Array<Vector>(N).Named("x" + node.name);
-            for (int ii = 0; ii < N.SizeAsInt; ii++) {
-                //double[] row = new double[node.parents.Count];
-                VariableArray<double> row = Variable<double>.Array(parentRange);
-                for (int jj = 0; jj < node.parents.Count; jj++ ) {
-                    row[jj] = (node.parents[jj].distributions.ObservedNumerical[ii]);
-                }
-                x[ii] = Variable.Vector(row);
-            }
-            yData = Variable.Array(Variable.Array<int>(node.states), N).Named("y" + node.name);
-            var trialsCount = Variable.Array<int>(N).Named("trialsCount" + node.name);
-            var g = Variable.Array(Variable.Array<double>(node.states), N).Named("g" + node.name);
-            g[N][node.states] = Variable.InnerProduct(B[node.states], (x[N])) + m[node.states];
-            var p = Variable.Array<Vector>(N).Named("p" + node.name);
-            p[N] = Variable.Softmax(g[N]);
-            using (Variable.ForEach(N))
-                yData[N] = Variable.Multinomial(trialsCount[N], p[N]);
+            Observed = Variable.Array<int>(N).Named(node.name);
+            Observed.SetValueRange(node.states);
+            //Variable.Multinomial(trialsCount[N], p[N]);
         }
         public override void Infer(InferenceEngine engine) {
             bPost = engine.Infer<VectorGaussian[]>(B);
@@ -362,13 +353,25 @@ namespace ZeldaInfer {
         }
 
         public override void SetObservedData(Tuple<int[], double[]> observedValues) {
-            int[][] classesCounts = new int[observedValues.Item1.Length][];
+            Range parentRange = new Range(node.parents.Count);
+          
+            x = Variable.Array<Vector>(N).Named("x" + node.name);
+            Observed.ObservedValue = observedValues.Item1;
             for (int ii = 0; ii < observedValues.Item1.Length; ii++) {
-                classesCounts[ii] = new int[node.states.SizeAsInt];
-                classesCounts[ii][observedValues.Item1[ii]] = 1;
+                //double[] row = new double[node.parents.Count];
+                VariableArray<double> row = Variable<double>.Array(parentRange);
+                for (int jj = 0; jj < node.parents.Count; jj++) {
+                    row[jj] = (node.parents[jj].distributions.ObservedNumerical[ii]);
+                }
+                x[ii] = Variable.Vector(row);
             }
-            yData.ObservedValue = classesCounts;
 
+            var g = Variable.Array(Variable.Array<double>(node.states), N).Named("g" + node.name);
+            g[N][node.states] = Variable.InnerProduct(B[node.states], (x[N])) + m[node.states];
+            var p = Variable.Array<Vector>(N).Named("p" + node.name);
+            p[N] = Variable.Softmax(g[N]);
+            using (Variable.ForEach(N))
+                Observed[N] = Variable.Discrete(p[N]);
         }
     }
     public class OneCategoricalParentNodeCategorical : DistributionsNode {
@@ -428,7 +431,7 @@ namespace ZeldaInfer {
             this.node = node;
             Range parentStates = node.parents[0].states;
             meanPrior = Variable.Array<Gaussian>(parentStates).Named(node.name + "mean" + "Prior");
-            meanPrior.ObservedValue = Enumerable.Repeat( Gaussian.FromMeanAndPrecision(0, 100),parentStates.SizeAsInt).ToArray();
+            meanPrior.ObservedValue = Enumerable.Repeat( Gaussian.FromMeanAndVariance(0, 100),parentStates.SizeAsInt).ToArray();
             precisionPrior = Variable.Array<Gamma>(parentStates).Named(node.name + "prec" + "Prior");
             precisionPrior.ObservedValue = Enumerable.Repeat(Gamma.FromShapeAndScale(1, 1), parentStates.SizeAsInt).ToArray();
             mean = Variable.Array<double>(parentStates).Named(node.name + "mean");
@@ -438,7 +441,7 @@ namespace ZeldaInfer {
             precision[parentStates] = Variable<double>.Random(precisionPrior[parentStates]);
 
             val = Variable.Array<double>(parentStates).Named(node.name + "val");
-            val[parentStates] = Variable.GaussianFromMeanAndPrecision(mean[parentStates], precision[parentStates]);
+            val[parentStates] = Variable.GaussianFromMeanAndVariance(mean[parentStates], precision[parentStates]);
         }
         public override void AddParents() {
             ObservedNumerical = DistributionsNode.AddChildFromOneParent(node.parents[0].distributions.Observed, val).Named(node.name);
@@ -521,7 +524,7 @@ namespace ZeldaInfer {
             Range parent1States = node.parents[0].states;
             Range parent2States = node.parents[1].states;
             meanPrior = Variable.Array(Variable.Array<Gaussian>(parent1States), parent2States).Named(node.name + "mean" + "Prior");
-            meanPrior.ObservedValue = Enumerable.Repeat(Enumerable.Repeat(Gaussian.FromMeanAndPrecision(0, 100), parent1States.SizeAsInt).ToArray(), parent2States.SizeAsInt).ToArray(); ;
+            meanPrior.ObservedValue = Enumerable.Repeat(Enumerable.Repeat(Gaussian.FromMeanAndVariance(0, 100), parent1States.SizeAsInt).ToArray(), parent2States.SizeAsInt).ToArray(); ;
            
             precisionPrior = Variable.Array(Variable.Array<Gamma>(parent1States), parent2States).Named(node.name + "mean" + "Prior");
             precisionPrior.ObservedValue = Enumerable.Repeat(Enumerable.Repeat(Gamma.FromShapeAndScale(1, 1), parent1States.SizeAsInt).ToArray(), parent2States.SizeAsInt).ToArray(); ;
@@ -533,7 +536,7 @@ namespace ZeldaInfer {
             precision[parent2States][parent1States] = Variable<double>.Random(precisionPrior[parent2States][parent1States]);
 
             val = Variable.Array(Variable.Array<double>(parent1States), parent2States).Named(node.name + "val");
-            val[parent2States][parent1States] = Variable.GaussianFromMeanAndPrecision(mean[parent2States][parent1States], precision[parent2States][parent1States]);
+            val[parent2States][parent1States] = Variable.GaussianFromMeanAndVariance(mean[parent2States][parent1States], precision[parent2States][parent1States]);
 
         }
         override public int ParentCount() {
