@@ -1,0 +1,425 @@
+properties{
+  x = 0,
+  y = 0,
+  width = 5120,
+  height = 5120,
+  tileset = "5",
+  music = "same",
+}
+
+tile{
+  layer = 1,
+  x = 16,
+  y = 16,
+  width = 24,
+  height = 24,
+  pattern = "45",
+}
+
+tile{
+  layer = 1,
+  x = 280,
+  y = 16,
+  width = 24,
+  height = 24,
+  pattern = "46",
+}
+
+tile{
+  layer = 1,
+  x = 16,
+  y = 216,
+  width = 24,
+  height = 24,
+  pattern = "47",
+}
+
+tile{
+  layer = 1,
+  x = 280,
+  y = 216,
+  width = 24,
+  height = 24,
+  pattern = "48",
+}
+
+tile{
+  layer = 1,
+  x = 40,
+  y = 16,
+  width = 240,
+  height = 24,
+  pattern = "49",
+}
+
+tile{
+  layer = 1,
+  x = 16,
+  y = 40,
+  width = 24,
+  height = 176,
+  pattern = "51",
+}
+
+tile{
+  layer = 1,
+  x = 280,
+  y = 40,
+  width = 24,
+  height = 176,
+  pattern = "50",
+}
+
+tile{
+  layer = 1,
+  x = 40,
+  y = 216,
+  width = 240,
+  height = 24,
+  pattern = "52",
+}
+
+tile{
+  layer = 1,
+  x = 40,
+  y = 40,
+  width = 240,
+  height = 176,
+  pattern = "2",
+}
+
+tile{
+  layer = 1,
+  x = 40,
+  y = 40,
+  width = 8,
+  height = 8,
+  pattern = "241",
+}
+
+tile{
+  layer = 1,
+  x = 48,
+  y = 40,
+  width = 224,
+  height = 8,
+  pattern = "236",
+}
+
+tile{
+  layer = 1,
+  x = 272,
+  y = 40,
+  width = 8,
+  height = 8,
+  pattern = "242",
+}
+
+tile{
+  layer = 1,
+  x = 40,
+  y = 48,
+  width = 8,
+  height = 160,
+  pattern = "238",
+}
+
+tile{
+  layer = 1,
+  x = 40,
+  y = 208,
+  width = 8,
+  height = 8,
+  pattern = "240",
+}
+
+tile{
+  layer = 1,
+  x = 48,
+  y = 208,
+  width = 224,
+  height = 8,
+  pattern = "179",
+}
+
+tile{
+  layer = 1,
+  x = 272,
+  y = 208,
+  width = 8,
+  height = 8,
+  pattern = "239",
+}
+
+tile{
+  layer = 1,
+  x = 272,
+  y = 48,
+  width = 8,
+  height = 160,
+  pattern = "237",
+}
+
+door{
+  layer = 1,
+  x = 152,
+  y = 24,
+  direction = 1,
+  sprite = "entities/door_normal",
+}
+
+door{
+  layer = 1,
+  x = 24,
+  y = 120,
+  direction = 2,
+  sprite = "entities/door_normal",
+}
+
+door{
+  layer = 1,
+  x = 280,
+  y = 120,
+  direction = 0,
+  sprite = "entities/door_normal",
+}
+
+door{
+  layer = 1,
+  x = 152,
+  y = 216,
+  direction = 3,
+  sprite = "entities/door_normal",
+}
+
+enemy{
+  layer = 1,
+  x = 104,
+  y = 117,
+  direction = 3,
+  breed = "simple_green_soldier",
+}
+
+enemy{
+  layer = 1,
+  x = 208,
+  y = 149,
+  direction = 3,
+  breed = "simple_green_soldier",
+}
+
+enemy{
+  layer = 1,
+  x = 120,
+  y = 181,
+  direction = 3,
+  breed = "simple_green_soldier",
+}
+
+chest{
+  layer = 1,
+  x = 160,
+  y = 133,
+  treasure_name = "big_key",
+  sprite = "entities/chest",
+}
+
+block{
+  layer = 1,
+  x = 160,
+  y = 101,
+  direction = -1,
+  sprite = "entities/block",
+  pushable = true,
+  pullable = false,
+  maximum_moves = 1,
+}
+
+block{
+  layer = 1,
+  x = 144,
+  y = 117,
+  direction = -1,
+  sprite = "entities/block",
+  pushable = true,
+  pullable = false,
+  maximum_moves = 1,
+}
+
+block{
+  layer = 1,
+  x = 128,
+  y = 133,
+  direction = -1,
+  sprite = "entities/block",
+  pushable = true,
+  pullable = false,
+  maximum_moves = 1,
+}
+
+block{
+  layer = 1,
+  x = 144,
+  y = 149,
+  direction = -1,
+  sprite = "entities/block",
+  pushable = true,
+  pullable = false,
+  maximum_moves = 1,
+}
+
+block{
+  layer = 1,
+  x = 160,
+  y = 165,
+  direction = -1,
+  sprite = "entities/block",
+  pushable = true,
+  pullable = false,
+  maximum_moves = 1,
+}
+
+block{
+  layer = 1,
+  x = 176,
+  y = 149,
+  direction = -1,
+  sprite = "entities/block",
+  pushable = true,
+  pullable = false,
+  maximum_moves = 1,
+}
+
+block{
+  layer = 1,
+  x = 192,
+  y = 133,
+  direction = -1,
+  sprite = "entities/block",
+  pushable = true,
+  pullable = false,
+  maximum_moves = 1,
+}
+
+block{
+  layer = 1,
+  x = 176,
+  y = 117,
+  direction = -1,
+  sprite = "entities/block",
+  pushable = true,
+  pullable = false,
+  maximum_moves = 1,
+}
+
+enemy{
+  layer = 1,
+  x = 48,
+  y = 53,
+  direction = 3,
+  breed = "pike_detect",
+}
+
+enemy{
+  layer = 1,
+  x = 272,
+  y = 53,
+  direction = 3,
+  breed = "pike_detect",
+}
+
+enemy{
+  layer = 1,
+  x = 272,
+  y = 213,
+  direction = 3,
+  breed = "pike_detect",
+}
+
+enemy{
+  layer = 1,
+  x = 48,
+  y = 213,
+  direction = 3,
+  breed = "pike_detect",
+}
+
+chest{
+  layer = 1,
+  x = 88,
+  y = 85,
+  sprite = "entities/big_chest",
+}
+
+tile{
+  layer = 2,
+  x = 0,
+  y = 0,
+  width = 16,
+  height = 256,
+  pattern = "170",
+}
+
+tile{
+  layer = 2,
+  x = 304,
+  y = 0,
+  width = 16,
+  height = 256,
+  pattern = "170",
+}
+
+tile{
+  layer = 2,
+  x = 16,
+  y = 0,
+  width = 288,
+  height = 16,
+  pattern = "170",
+}
+
+tile{
+  layer = 2,
+  x = 16,
+  y = 240,
+  width = 288,
+  height = 16,
+  pattern = "170",
+}
+
+tile{
+  layer = 2,
+  x = 144,
+  y = 16,
+  width = 32,
+  height = 8,
+  pattern = "152",
+}
+
+tile{
+  layer = 2,
+  x = 144,
+  y = 232,
+  width = 32,
+  height = 8,
+  pattern = "153",
+}
+
+tile{
+  layer = 2,
+  x = 16,
+  y = 112,
+  width = 8,
+  height = 32,
+  pattern = "164",
+}
+
+tile{
+  layer = 2,
+  x = 296,
+  y = 112,
+  width = 8,
+  height = 32,
+  pattern = "165",
+}
+

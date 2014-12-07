@@ -9,15 +9,15 @@ using MicrosoftResearch.Infer.Distributions;
 using MicrosoftResearch.Infer.Maths;
 
 
-namespace ZeldaInfer
-{
+namespace ZeldaInfer {
+    [Serializable]
     public enum DistributionType {
         Categorical,
         Numerical
     }
-
-    public class ModelNode
-    {   
+    [Serializable]
+    public class ModelNode {
+        [NonSerialized]
         public Range states;
         public string name;
         public DistributionType distributionType;

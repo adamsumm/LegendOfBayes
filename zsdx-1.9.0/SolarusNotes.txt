@@ -1,0 +1,36 @@
+RoomConversion
+
+TOP DOOR
+door{
+  layer = 1,
+  x = 152,
+  y = 24,
+  direction = 1,
+  sprite = "entities/door_normal",
+}
+LEFT DOOR
+door{
+  layer = 1,
+  x = 24,
+  y = 120,
+  direction = 2,
+  sprite = "entities/door_normal",
+}
+RIGHT DOOR
+door{
+  layer = 1,
+  x = 280,
+  y = 120,
+  direction = 0,
+  sprite = "entities/door_normal",
+}
+BOTTOM DOOR
+door{
+  layer = 1,
+  x = 152,
+  y = 216,
+  direction = 3,
+  sprite = "entities/door_normal",
+}
+
+All of the tiles can be kept

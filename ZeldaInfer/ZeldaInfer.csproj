@@ -65,6 +65,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BayesPointMachine\BPMShared.cs" />
     <Compile Include="BayesPointMachine\BPMUtils.cs" />
     <Compile Include="BayesPointMachine\BPM.cs" />
     <Compile Include="Extensions.cs" />

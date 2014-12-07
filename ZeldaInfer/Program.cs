@@ -5,7 +5,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using System.Text.RegularExpressions;/*
+using System.Text.RegularExpressions;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.IO;
+
+/*
 using MicrosoftResearch.Infer;
 using MicrosoftResearch.Infer.Collections;
 using MicrosoftResearch.Infer.Distributions;
@@ -23,11 +27,25 @@ namespace ZeldaInfer {
 		
 		static void ModelNetworkSprinklerFile() {
 
-			GraphicalModel model = new GraphicalModel("WetRainSprinkler3.xml");
+			GraphicalModel model = new GraphicalModel("WetRainSprinkler3.xml",5);
 			model.CreateNetwork();
 			Dictionary<string, Tuple<int[],double[]>> observedData = GraphicalModel.LoadData("WetRainSprinklerData2.xml");
-			model.LearnParameters(observedData);
+            model.LearnParameters(observedData);
+            BinaryFormatter serializer = new BinaryFormatter();
+
+            using (FileStream stream = new FileStream("temp.bin", FileMode.Create)) {
+                serializer.Serialize(stream, model);
+            }
 		}
+
+        static void ModelNetworkSprinklerSerialized() {
+            BinaryFormatter formatter = new BinaryFormatter();
+            Stream stream = new FileStream("temp.bin", FileMode.Open, FileAccess.Read, FileShare.Read);
+            GraphicalModel model = (GraphicalModel)formatter.Deserialize(stream);
+            model.LoadAfterSerialization("WetRainSprinkler3.xml");
+            stream.Close();
+
+        }
 		 
 		static void RunAllLevels() {
 			string[] levels = new string[]{
@@ -90,13 +108,22 @@ namespace ZeldaInfer {
             Dictionary<string, string> summaryDictionary = new Dictionary<string, string>();
             int totalCount = 0;
             string str = "";
+            Dictionary<string, bool> isCategorical = new Dictionary<string, bool>();
             foreach (var summary in summaries) {
                 XDocument summaryDoc = XDocument.Load(summary);
                 Dictionary<string, string> levelParams = new Dictionary<string, string>();
                 Dictionary<string, string> roomParams = new Dictionary<string, string>();
                 int copies = 0;
                 foreach (XElement element in summaryDoc.Root.Descendants()) {
+                    if (Regex.IsMatch(element.Value, @"[a-z]")) {
+                        isCategorical[element.Name.LocalName] = true;
+                    }
+                    else {
+                        isCategorical[element.Name.LocalName] = false;
+
+                    }
                     if (wholeLevelParameters.Contains(element.Name.LocalName)) {
+
                         if (element.Name.LocalName == "pathLength") {
                             str += element.Value + ",";
                         }
@@ -167,12 +194,19 @@ namespace ZeldaInfer {
 			}
             XDocument dungeonDoc = new XDocument(new XElement("root"));
             foreach (var category in categories) {
-
+                string domain = "Numerical";
+                if (isCategorical[category.Key]) {
+                    domain = "Categorical";
+                }
                 dungeonDoc.Root.Add(new XElement("Category", new XAttribute("name", category.Key + "Category"), new XAttribute("categories", string.Join(",", 
-                    Enumerable.Range(0, category.Value.Count)))));
+                    Enumerable.Range(0, category.Value.Count))),new XAttribute("domain",domain)));
             }
             foreach (var node in nodes.Values) {
-                dungeonDoc.Root.Add(new XElement("Node", new XAttribute("name", node), new XAttribute("category", node + "Category")));
+                string domain = "Numerical";
+                if (isCategorical[node]) {
+                    domain = "Categorical";
+                }
+                dungeonDoc.Root.Add(new XElement("Node", new XAttribute("name", node), new XAttribute("category", node + "Category"), new XAttribute("domain", domain)));
             }
             foreach (var edge in edges) {
                 dungeonDoc.Root.Add(new XElement("Edge", new XAttribute("parent", nodes[edge.Item1]), new XAttribute("child", nodes[edge.Item2])));
@@ -180,25 +214,35 @@ namespace ZeldaInfer {
             dungeonDoc.Save("dungeonNetwork.xml");
             XDocument dataDoc = new XDocument(new XElement("root"));
             foreach (var param in summaryDictionary) {
-                dataDoc.Root.Add(new XElement("Data", new XAttribute("name", param.Key),string.Join(",",param.Value.Substring(0,param.Value.Length-1).Split(';').Select(p => categories[param.Key].IndexOf(p)))  ));
+                string domain = "Numerical";
+                if (isCategorical[param.Key]) {
+                    domain = "Categorical";
+                }
+                dataDoc.Root.Add(new XElement("Data",new XAttribute("domain",domain), new XAttribute("name", param.Key),string.Join(",",param.Value.Substring(0,param.Value.Length-1).Split(';').Select(p => categories[param.Key].IndexOf(p)))  ));
               //  Console.WriteLine(param.Key + " = [" + string.Join(",",param.Value.Substring(0,param.Value.Length-1).Split(';')) + "]");
             }
             dataDoc.Save("dungeonNetworkData.xml");
 		}
         static void CreateGraphicalModel() {
 
-            GraphicalModel model = new GraphicalModel("dungeonNetwork.xml");
+            GraphicalModel model = new GraphicalModel("dungeonNetwork.xml",5);
             model.CreateNetwork();
             Dictionary<string, Tuple<int[],double[]>> observedData = GraphicalModel.LoadData("dungeonNetworkData.xml");
             model.LearnParameters(observedData);
+            BinaryFormatter serializer = new BinaryFormatter();
+
+            using (FileStream stream = new FileStream("learnedDungeonNetworkData.bin", FileMode.Create)) {
+                serializer.Serialize(stream, model);
+            }
         }
 
 		static void Main(string[] args) {
       //      RunAllLevels();
-         //   CreateGraphicalModelFiles();
-           // CreateGraphicalModel();
+         //  CreateGraphicalModelFiles();
+            CreateGraphicalModel();
           //  InferTest.Test2();
-            ModelNetworkSprinklerFile();
+          //  ModelNetworkSprinklerFile();
+        //    ModelNetworkSprinklerSerialized();
 			Console.WriteLine("ALL DONE :)");
 			Console.Read();
 		}
