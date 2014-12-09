@@ -135,6 +135,7 @@ namespace ZeldaInfer {
             }
             */
             for (int ii = 0; ii < sharedModel.BatchCount; ii++) {
+                Console.WriteLine((ii + 1) + "/" + sharedModel.BatchCount + " : " + ((double)(ii + 1)) / ((double)sharedModel.BatchCount));
                 int numberOfEntries = 0;
                 foreach (KeyValuePair<string, ModelNode> kvPair in nodes) {
                     if (kvPair.Value.distributionType == DistributionType.Categorical) {
@@ -183,6 +184,7 @@ namespace ZeldaInfer {
             List<Tuple<string, string, string>> nodeParams = new List<Tuple<string, string, string>>();
 
             Engine = new InferenceEngine(new VariationalMessagePassing());
+       //     Engine.Compiler.UseParallelForLoops = true;
             rangeCategories = new Dictionary<string, Tuple<string[], Range>>();
             foreach (var element in xdoc.Descendants()) {
                 switch (element.Name.ToString()) {
