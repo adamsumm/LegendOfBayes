@@ -644,7 +644,7 @@ namespace ZeldaInfer {
         }
         public override double getLogLikelihood(Dictionary<string, Tuple<int[], double[]>> data, int dataPoint) //prob needs fix
         {
-            int parentCategory = data[node.parents[0].name].Item1[dataPoint];
+            int parentCategory = 0;// data[node.parents[0].name].Item1[dataPoint];
             int myCategory = data[node.name].Item1[dataPoint];
             List<double> parentX = new List<double>();
             foreach (var parent in node.parents)

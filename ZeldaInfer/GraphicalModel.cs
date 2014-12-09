@@ -208,8 +208,9 @@ namespace ZeldaInfer {
             foreach (var node in nodeParams) {
 
                 nodes[node.Item1].states = rangeCategories[node.Item2].Item2;
-                nodes[node.Item1].distributions.LoadAfterSerialization(N);
+            //    nodes[node.Item1].distributions.LoadAfterSerialization(N);
             }
+            /*
             List<ModelNode> completed = new List<ModelNode>();
             foreach (ModelNode node in independentNodes.Values) {
                 node.distributions.AddParents();
@@ -232,6 +233,7 @@ namespace ZeldaInfer {
                     }
                 }
             }
+             */
         }
     }
 }

@@ -27,9 +27,9 @@ namespace ZeldaInfer {
 		
 		static Tuple<GraphicalModel,Dictionary<string, Tuple<int[],double[]>>> ModelNetworkSprinklerFile() {
 
-			GraphicalModel model = new GraphicalModel("WetRainSprinkler3.xml",5);
+			GraphicalModel model = new GraphicalModel("WetRainSprinkler.xml",5);
 			model.CreateNetwork();
-			Dictionary<string, Tuple<int[],double[]>> observedData = GraphicalModel.LoadData("WetRainSprinklerData2.xml");
+			Dictionary<string, Tuple<int[],double[]>> observedData = GraphicalModel.LoadData("WetRainSprinklerData3.xml");
             model.LearnParameters(observedData);
             BinaryFormatter serializer = new BinaryFormatter();
 
@@ -78,7 +78,7 @@ namespace ZeldaInfer {
 				dungeon.WriteStats(output, path);
 			}
 		}
-		static void CreateGraphicalModelFiles() {
+		static void CreateGraphicalModelFiles(string inputFile, string networkFilename) {
             string[] summaries = new string[]{
                 "Summaries/LA1.xml","Summaries/LA2.xml","Summaries/LA3.xml",
                 "Summaries/LA4.xml","Summaries/LA6.xml","Summaries/LA7.xml",
@@ -174,7 +174,7 @@ namespace ZeldaInfer {
             //    Console.WriteLine(str);
             }
             categoriesDoc.Save("categories.xml");
-			XDocument xdoc = XDocument.Load("BayesNetwork.xml");
+			XDocument xdoc = XDocument.Load(inputFile);
             Dictionary<string, string> nodes = new Dictionary<string, string>();
             List<Tuple<string, string>> edges = new List<Tuple<string, string>>();
 			foreach (XElement element in xdoc.Root.Descendants()) {
@@ -222,22 +222,22 @@ namespace ZeldaInfer {
                 dataDoc.Root.Add(new XElement("Data",new XAttribute("domain",domain), new XAttribute("name", param.Key),string.Join(",",param.Value.Substring(0,param.Value.Length-1).Split(';').Select(p => categories[param.Key].IndexOf(p)))  ));
               //  Console.WriteLine(param.Key + " = [" + string.Join(",",param.Value.Substring(0,param.Value.Length-1).Split(';')) + "]");
             }
-            dataDoc.Save("dungeonNetworkData.xml");
+            dataDoc.Save(networkFilename);
 		}
-        static GraphicalModel CreateGraphicalModel()
+        static Tuple<GraphicalModel, Dictionary<string, Tuple<int[],double[]>>> CreateGraphicalModel(string modelFile, string dataFile)
         {
 
-            GraphicalModel model = new GraphicalModel("dungeonNetwork.xml",13);
+            GraphicalModel model = new GraphicalModel(modelFile, 13);
             model.CreateNetwork();
-            Dictionary<string, Tuple<int[],double[]>> observedData = GraphicalModel.LoadData("dungeonNetworkData.xml");
+            Dictionary<string, Tuple<int[], double[]>> observedData = GraphicalModel.LoadData(dataFile);
             model.LearnParameters(observedData);
             BinaryFormatter serializer = new BinaryFormatter();
 
-            using (FileStream stream = new FileStream("learnedDungeonNetworkData.bin", FileMode.Create)) {
+            using (FileStream stream = new FileStream(modelFile.Substring(0,modelFile.LastIndexOf("."))+"bin", FileMode.Create)) {
                 serializer.Serialize(stream, model);
             }
 
-            return model;
+            return new Tuple<GraphicalModel,Dictionary<string,Tuple<int[],double[]>>>(model,observedData);
         }
 
         static double evaluate(GraphicalModel model, Dictionary<string, Tuple<int[], double[]>> data)
@@ -297,17 +297,36 @@ namespace ZeldaInfer {
             return loglikelihood - d/2.0 * Math.Log(N);
         }
 
+        static Tuple<GraphicalModel,Dictionary<string, Tuple<int[],double[]>>> ModelNetworkSerialized() {
+            BinaryFormatter formatter = new BinaryFormatter();
+            Stream stream = new FileStream("learnedDungeonNetworkData.bin", FileMode.Open, FileAccess.Read, FileShare.Read);
+            GraphicalModel model = (GraphicalModel)formatter.Deserialize(stream);
+            Dictionary<string, Tuple<int[],double[]>> observedData = GraphicalModel.LoadData("dungeonNetworkData.xml");
+
+            model.LoadAfterSerialization("dungeonNetwork.xml");
+            stream.Close();
+            return new Tuple<GraphicalModel,Dictionary<string,Tuple<int[],double[]>>>(model,observedData);
+        }
 		static void Main(string[] args) {
       //      RunAllLevels();
           // CreateGraphicalModelFiles();
             //GraphicalModel model = CreateGraphicalModel();
           //  InferTest.Test2();
-            var output = ModelNetworkSprinklerFile();
+
+
+          //  var output = ModelNetworkSprinklerFile();
+           // var output = ModelNetworkSerialized();
+
         //    ModelNetworkSprinklerSerialized();
 
 
           //  CreateGraphicalModel();
         //    Dictionary<string, Tuple<int[], double[]>> observedData = GraphicalModel.LoadData("dungeonNetworkData.xml");
+            string downloadedFilenmae = "BayesNetwork.xml"; //CHANGE THIS
+            string variantName = "NaiveBayes.xml"; //CHANGE THIS
+            CreateGraphicalModelFiles(downloadedFilenmae, variantName);
+            var output = CreateGraphicalModel(variantName, "dungeonNetworkData.xml");
+
             double evaluationMetric = evaluate(output.Item1, output.Item2);
 
             Console.WriteLine(evaluationMetric);
