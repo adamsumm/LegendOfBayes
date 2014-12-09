@@ -25,7 +25,7 @@ using ZeldaInfer.LevelParse;
 namespace ZeldaInfer {
 	class Program {
 		
-		static void ModelNetworkSprinklerFile() {
+		static Tuple<GraphicalModel,Dictionary<string, Tuple<int[],double[]>>> ModelNetworkSprinklerFile() {
 
 			GraphicalModel model = new GraphicalModel("WetRainSprinkler3.xml",5);
 			model.CreateNetwork();
@@ -36,6 +36,7 @@ namespace ZeldaInfer {
             using (FileStream stream = new FileStream("temp.bin", FileMode.Create)) {
                 serializer.Serialize(stream, model);
             }
+            return new Tuple<GraphicalModel,Dictionary<string,Tuple<int[],double[]>>>(model,observedData);
 		}
 
         static void ModelNetworkSprinklerSerialized() {
@@ -223,7 +224,8 @@ namespace ZeldaInfer {
             }
             dataDoc.Save("dungeonNetworkData.xml");
 		}
-        static void CreateGraphicalModel() {
+        static GraphicalModel CreateGraphicalModel()
+        {
 
             GraphicalModel model = new GraphicalModel("dungeonNetwork.xml",5);
             model.CreateNetwork();
@@ -234,15 +236,80 @@ namespace ZeldaInfer {
             using (FileStream stream = new FileStream("learnedDungeonNetworkData.bin", FileMode.Create)) {
                 serializer.Serialize(stream, model);
             }
+
+            return model;
+        }
+
+        static double evaluate(GraphicalModel model, Dictionary<string, Tuple<int[], double[]>> data)
+        {
+            int dataPointCount = 0;
+            foreach (var datatype in data)
+            {
+                if (datatype.Value.Item1 != null)
+                {
+                    dataPointCount = datatype.Value.Item1.Length;
+                    break;
+                }
+                else
+                {
+                    dataPointCount = datatype.Value.Item2.Length;
+                    break;
+                }
+            }
+
+            double loglikelihood = 0;
+            int N = dataPointCount, d = 0;
+
+            foreach (ModelNode eachNode in model.nodes.Values) 
+            {
+                int parentStates = 1;
+                int numericalParentCount = 1;
+                foreach (var parent in eachNode.parents){
+                    if (parent.distributionType == DistributionType.Categorical)
+                    {
+                        parentStates *= parent.states.SizeAsInt;
+                    }
+                    else
+                    {
+                        numericalParentCount += 1;
+                    }
+                }
+                if (eachNode.distributionType == DistributionType.Categorical)
+                {
+                    d += eachNode.states.SizeAsInt * parentStates * numericalParentCount;
+                }
+                else
+                {
+                    d += parentStates * numericalParentCount;
+                }
+            }
+
+            for (int ii = 0; ii < dataPointCount; ii++)
+            {
+                foreach (ModelNode eachNode in model.nodes.Values)
+                {
+
+                    loglikelihood += eachNode.distributions.getLogLikelihood(data, ii);
+
+                }
+            }
+
+            return loglikelihood - d/2.0 * Math.Log(N);
         }
 
 		static void Main(string[] args) {
       //      RunAllLevels();
          //  CreateGraphicalModelFiles();
-            CreateGraphicalModel();
+            //GraphicalModel model = CreateGraphicalModel();
           //  InferTest.Test2();
-          //  ModelNetworkSprinklerFile();
+            var output = ModelNetworkSprinklerFile();
         //    ModelNetworkSprinklerSerialized();
+
+        //    Dictionary<string, Tuple<int[], double[]>> observedData = GraphicalModel.LoadData("dungeonNetworkData.xml");
+            double evaluationMetric = evaluate(output.Item1, output.Item2);
+
+            Console.WriteLine(evaluationMetric);
+
 			Console.WriteLine("ALL DONE :)");
 			Console.Read();
 		}
