@@ -183,8 +183,7 @@ namespace ZeldaInfer {
             List<Tuple<string, string>> edges = new List<Tuple<string, string>>();
             List<Tuple<string, string, string>> nodeParams = new List<Tuple<string, string, string>>();
 
-            Engine = new InferenceEngine(new VariationalMessagePassing());
-       //     Engine.Compiler.UseParallelForLoops = true;
+           //     Engine.Compiler.UseParallelForLoops = true;
             rangeCategories = new Dictionary<string, Tuple<string[], Range>>();
             foreach (var element in xdoc.Descendants()) {
                 switch (element.Name.ToString()) {
@@ -206,7 +205,7 @@ namespace ZeldaInfer {
             Range N = new Range(NumberOfExamples).Named("N");
 
             foreach (var node in nodeParams) {
-
+                nodes[node.Item1].distributionType = (DistributionType)Enum.Parse(typeof(DistributionType), node.Item3);
                 nodes[node.Item1].states = rangeCategories[node.Item2].Item2;
             //    nodes[node.Item1].distributions.LoadAfterSerialization(N);
             }

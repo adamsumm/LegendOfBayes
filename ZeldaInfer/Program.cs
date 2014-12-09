@@ -325,12 +325,20 @@ namespace ZeldaInfer {
             string downloadedFilenmae = "Naive Bayes.xml"; //CHANGE THIS
             string variantName = "NaiveBayes.xml"; //CHANGE THIS
             CreateGraphicalModelFiles(downloadedFilenmae, variantName); //FILE CONVERSION
+
+
+            downloadedFilenmae = "BayesNetwork.xml"; //CHANGE THIS
+            variantName = "dungeonNetwork.xml"; //CHANGE THIS
+            CreateGraphicalModelFiles(downloadedFilenmae, variantName); //FILE CONVERSION
             var output = CreateGraphicalModel(variantName, "dungeonNetworkData.xml"); // LEARNING HAPPENS
 
             double evaluationMetric = evaluate(output.Item1, output.Item2);
 
             Console.WriteLine(evaluationMetric);
+            output = ModelNetworkSerialized();
+            evaluationMetric = evaluate(output.Item1, output.Item2);
 
+            Console.WriteLine(evaluationMetric);
 			Console.WriteLine("ALL DONE :)");
 			Console.Read();
 		}
