@@ -37,6 +37,7 @@ namespace ZeldaInfer {
         public abstract void Infer(InferenceEngine engine);
         public abstract void SetPriorToPosterior();
         public abstract void SetObservedData(Tuple<int[],double[]> observedValues);
+        public abstract double getLogLikelihood(Dictionary<string, Tuple<int[], double[]>> data, int dataPoint);
         public virtual void LoadAfterSerialization(Range N) {
             this.N = N;
         }
@@ -301,6 +302,9 @@ namespace ZeldaInfer {
         public override void SetObservedData(Tuple<int[], double[]> observedValues) {
             Observed.ObservedValue = observedValues.Item1;
         }
+        public override double getLogLikelihood(Dictionary<string,Tuple<int[],double[]>> data, int dataPoint) {
+            return new Discrete(ProbPosterior.GetMean()).GetLogProb(dataPoint);
+        }
     }
     [Serializable]
     public class NoParentNodeNumerical : DistributionsNode {
@@ -377,6 +381,10 @@ namespace ZeldaInfer {
         }
         public override void SetObservedData(Tuple<int[], double[]> observedValues) {
             ObservedNumerical.ObservedValue = observedValues.Item2;
+        }
+        public override double getLogLikelihood(Dictionary<string, Tuple<int[], double[]>> data, int dataPoint)
+        {
+            return Gaussian.FromMeanAndPrecision(meanPosterior.GetMean(), precPosterior.GetMean()).GetLogProb(dataPoint);
         }
 
     }
@@ -476,21 +484,6 @@ namespace ZeldaInfer {
                     x[ii] = Variable.Vector(row);
                 }
 
-                List<double> parentX = new List<double>();
-                foreach (var parent in node.parents){
-                    parentX.Add(data[parent.name].Item2[dataPoint]);
-                }
-                double[] softMaxProbs = new double[node.states.SizeAsInt];{);
-                double total = 0;
-                for (int ii = 0; ii < node.states.SizeAsInt; ii++){
-                    softMaxProbs[ii] = Math.Exp(bPost[ii].GetMean().Inner(Vector.FromArray(parentX.ToArray()) + mPost[ii].GetMean()));
-                    total += softMaxProbs[ii];
-                }
-                for (int ii = 0; ii < node.states.SizeAsInt; ii++){
-                    softMaxProbs[ii] /= total;
-                }
-
-
                 var g = Variable.Array(Variable.Array<double>(node.states), N).Named("g" + node.name);
                 g[N][node.states] = Variable.InnerProduct(B[node.states], (x[N])) + m[node.states];
                 var p = Variable.Array<Vector>(N).Named("p" + node.name);
@@ -499,6 +492,23 @@ namespace ZeldaInfer {
                     Observed[N] = Variable.Discrete(p[N]);
 
             }
+        }
+        public override double getLogLikelihood(Dictionary<string, Tuple<int[], double[]>> data, int dataPoint)
+        {
+                List<double> parentX = new List<double>();
+                foreach (var parent in node.parents){
+                    parentX.Add(data[parent.name].Item2[dataPoint]);
+                }
+                double[] softMaxProbs = new double[node.states.SizeAsInt];
+                double total = 0;
+                for (int ii = 0; ii < node.states.SizeAsInt; ii++){
+                    softMaxProbs[ii] = Math.Exp(bPost[ii].GetMean().Inner(Vector.FromArray(parentX.ToArray()) + mPost[ii].GetMean()));
+                    total += softMaxProbs[ii];
+                }
+                for (int ii = 0; ii < node.states.SizeAsInt; ii++){
+                    softMaxProbs[ii] /= total;
+                }
+                return new Discrete(softMaxProbs).GetLogProb(data[node.name].Item1[dataPoint]);
         }
     }
     [Serializable]
@@ -632,6 +642,28 @@ namespace ZeldaInfer {
                     Observed[N] = Variable.Discrete(p[parentObserved[N]][N]);
             }
         }
+        public override double getLogLikelihood(Dictionary<string, Tuple<int[], double[]>> data, int dataPoint) //prob needs fix
+        {
+            int parentCategory = data[node.parents[0].name].Item1[dataPoint];
+            int myCategory = data[node.name].Item1[dataPoint];
+            List<double> parentX = new List<double>();
+            foreach (var parent in node.parents)
+            {
+                parentX.Add(data[parent.name].Item2[dataPoint]);
+            }
+            double[] softMaxProbs = new double[node.states.SizeAsInt];
+            double total = 0;
+            for (int ii = 0; ii < node.states.SizeAsInt; ii++)
+            {
+                softMaxProbs[ii] = Math.Exp(bPost[ii][parentCategory].GetMean().Inner(Vector.FromArray(parentX.ToArray()) + mPost[ii][parentCategory].GetMean()));
+                total += softMaxProbs[ii];
+            }
+            for (int ii = 0; ii < node.states.SizeAsInt; ii++)
+            {
+                softMaxProbs[ii] /= total;
+            }
+            return new Discrete(softMaxProbs).GetLogProb(data[node.name].Item1[dataPoint]);
+        }
     }
     [Serializable]
     public class LinearRegression : DistributionsNode {
@@ -702,6 +734,21 @@ namespace ZeldaInfer {
                 //  var g = Variable<double>.Array(N).Named("g" + node.name);
                 ObservedNumerical[N] = Variable.GaussianFromMeanAndPrecision(Variable.InnerProduct(B, x[N]), 1.0);
             }
+        }
+        public override double getLogLikelihood(Dictionary<string, Tuple<int[], double[]>> data, int dataPoint)
+        {
+
+
+            List<double> parentX = new List<double>();
+            parentX.Add(1);
+            foreach (var parent in node.parents)
+            {
+                parentX.Add(data[parent.name].Item2[dataPoint]);
+            }
+            return Gaussian.FromMeanAndVariance(bPost.GetMean().Inner(Vector.FromArray(parentX.ToArray())), 1.0).GetLogProb(data[node.name].Item2[dataPoint]);
+  
+
+            
         }
     }
     [Serializable]
@@ -798,6 +845,25 @@ namespace ZeldaInfer {
                     ObservedNumerical[N] = Variable.GaussianFromMeanAndPrecision(Variable.InnerProduct(B[parentObserved[N]], x[N]), 1.0);
             }
         }
+        public override double getLogLikelihood(Dictionary<string, Tuple<int[], double[]>> data, int dataPoint)
+        {
+            List<double> parentX = new List<double>();
+            parentX.Add(1);
+            int parentClass = 0;
+            foreach (var parent in node.parents)
+            {
+                if (data[parent.name].Item2 == null)
+                {
+                    parentClass = data[parent.name].Item1[dataPoint];
+                }
+                else
+                {
+                    parentX.Add(data[parent.name].Item2[dataPoint]);
+                }
+            }
+            return Gaussian.FromMeanAndVariance(bPost[parentClass].GetMean().Inner(Vector.FromArray(parentX.ToArray())), 1.0).GetLogProb(data[node.name].Item2[dataPoint]);
+  
+        }
     }
     [Serializable]
     public class OneCategoricalParentNodeCategorical : DistributionsNode {
@@ -851,6 +917,12 @@ namespace ZeldaInfer {
         }
         public override void SetObservedData(Tuple<int[], double[]> observedValues) {
             Observed.ObservedValue = observedValues.Item1;
+        }
+        public override double getLogLikelihood(Dictionary<string, Tuple<int[], double[]>> data, int dataPoint) //cast
+        {
+            int parentCategory = data[node.parents[0].name].Item1[dataPoint];
+            int myValue = (data[node.name].Item1[dataPoint]);
+            return new Discrete(CPTPosterior[parentCategory].GetMean()).GetLogProb(myValue);
         }
     }
     [Serializable]
@@ -925,7 +997,12 @@ namespace ZeldaInfer {
         public override void SetObservedData(Tuple<int[], double[]> observedValues) {
             ObservedNumerical.ObservedValue = observedValues.Item2;
         }
-        
+        public override double getLogLikelihood(Dictionary<string, Tuple<int[], double[]>> data, int dataPoint) //not sure, emailed
+        {
+            int parentCategory = data[node.parents[0].name].Item1[dataPoint];
+            double myCategory = data[node.name].Item2[dataPoint];
+            return Gaussian.FromMeanAndPrecision(meanPosterior[parentCategory].GetMean(), precisionPrior[parentCategory].GetMean()).GetLogProb(myCategory);
+        }
     }
     /*
     [Serializable]
