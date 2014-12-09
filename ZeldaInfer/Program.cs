@@ -299,28 +299,19 @@ namespace ZeldaInfer {
 
 		static void Main(string[] args) {
       //      RunAllLevels();
-<<<<<<< HEAD
-           CreateGraphicalModelFiles();
-=======
-         //  CreateGraphicalModelFiles();
+          // CreateGraphicalModelFiles();
             //GraphicalModel model = CreateGraphicalModel();
->>>>>>> origin/master
           //  InferTest.Test2();
             var output = ModelNetworkSprinklerFile();
         //    ModelNetworkSprinklerSerialized();
 
-<<<<<<< HEAD
 
-
-
-            CreateGraphicalModel();
-=======
+          //  CreateGraphicalModel();
         //    Dictionary<string, Tuple<int[], double[]>> observedData = GraphicalModel.LoadData("dungeonNetworkData.xml");
             double evaluationMetric = evaluate(output.Item1, output.Item2);
 
             Console.WriteLine(evaluationMetric);
 
->>>>>>> origin/master
 			Console.WriteLine("ALL DONE :)");
 			Console.Read();
 		}

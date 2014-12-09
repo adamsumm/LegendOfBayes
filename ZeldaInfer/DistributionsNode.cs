@@ -303,7 +303,7 @@ namespace ZeldaInfer {
             Observed.ObservedValue = observedValues.Item1;
         }
         public override double getLogLikelihood(Dictionary<string,Tuple<int[],double[]>> data, int dataPoint) {
-            return new Discrete(ProbPosterior.GetMean()).GetLogProb(dataPoint);
+            return new Discrete(ProbPosterior.GetMean()).GetLogProb(data[node.name].Item1[dataPoint]);
         }
     }
     [Serializable]
@@ -649,7 +649,12 @@ namespace ZeldaInfer {
             List<double> parentX = new List<double>();
             foreach (var parent in node.parents)
             {
-                parentX.Add(data[parent.name].Item2[dataPoint]);
+                if (parent.distributionType == DistributionType.Numerical) {
+                    parentX.Add(data[parent.name].Item2[dataPoint]);
+                }
+                else {
+                    parentCategory = data[parent.name].Item1[dataPoint];
+                }
             }
             double[] softMaxProbs = new double[node.states.SizeAsInt];
             double total = 0;
