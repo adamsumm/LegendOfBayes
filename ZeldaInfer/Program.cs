@@ -212,7 +212,7 @@ namespace ZeldaInfer {
             foreach (var edge in edges) {
                 dungeonDoc.Root.Add(new XElement("Edge", new XAttribute("parent", nodes[edge.Item1]), new XAttribute("child", nodes[edge.Item2])));
             }
-            dungeonDoc.Save("dungeonNetwork.xml");
+            dungeonDoc.Save(networkFilename);
             XDocument dataDoc = new XDocument(new XElement("root"));
             foreach (var param in summaryDictionary) {
                 string domain = "Numerical";
@@ -222,7 +222,7 @@ namespace ZeldaInfer {
                 dataDoc.Root.Add(new XElement("Data",new XAttribute("domain",domain), new XAttribute("name", param.Key),string.Join(",",param.Value.Substring(0,param.Value.Length-1).Split(';').Select(p => categories[param.Key].IndexOf(p)))  ));
               //  Console.WriteLine(param.Key + " = [" + string.Join(",",param.Value.Substring(0,param.Value.Length-1).Split(';')) + "]");
             }
-            dataDoc.Save(networkFilename);
+            dataDoc.Save("dungeonNetworkData.xml");
 		}
         static Tuple<GraphicalModel, Dictionary<string, Tuple<int[],double[]>>> CreateGraphicalModel(string modelFile, string dataFile)
         {
@@ -322,10 +322,10 @@ namespace ZeldaInfer {
 
           //  CreateGraphicalModel();
         //    Dictionary<string, Tuple<int[], double[]>> observedData = GraphicalModel.LoadData("dungeonNetworkData.xml");
-            string downloadedFilenmae = "BayesNetwork.xml"; //CHANGE THIS
+            string downloadedFilenmae = "Naive Bayes.xml"; //CHANGE THIS
             string variantName = "NaiveBayes.xml"; //CHANGE THIS
-            CreateGraphicalModelFiles(downloadedFilenmae, variantName);
-            var output = CreateGraphicalModel(variantName, "dungeonNetworkData.xml");
+            CreateGraphicalModelFiles(downloadedFilenmae, variantName); //FILE CONVERSION
+            var output = CreateGraphicalModel(variantName, "dungeonNetworkData.xml"); // LEARNING HAPPENS
 
             double evaluationMetric = evaluate(output.Item1, output.Item2);
 
