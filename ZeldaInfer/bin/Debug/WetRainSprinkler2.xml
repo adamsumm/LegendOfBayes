@@ -1,0 +1,17 @@
+<root>
+	<Category name="C" categories="0,1"></Category>
+	<Category name="R" categories="0,1"></Category>
+	<Category name="S" categories="0,1"></Category>
+	<Category name="W" categories="0,1"></Category>
+	
+	<Edge parent="Cloudy" child="Rain"></Edge>
+	<Edge parent="Cloudy" child="Sprinkler"></Edge>
+	<Edge parent="Sprinkler" child="Wet"></Edge>
+	<Edge parent="Rain" child="Wet"></Edge>
+	
+	
+	<Node name="Cloudy" category="C"></Node>
+	<Node name="Sprinkler" category="S"></Node>
+	<Node name="Rain" category="R"></Node>
+	<Node name="Wet" category="W"></Node>
+</root>

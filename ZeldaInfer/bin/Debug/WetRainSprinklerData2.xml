@@ -1,0 +1,6 @@
+﻿<root>
+     <Data name="Cloudy"  domain="Numerical">0,1,0,1,0,0,0,0,1,1,0,0,0,0,1</Data>
+  <Data name="Sprinkler"  domain="Numerical">1,1,1,1,1,1,0,1,0,0,0,1,1,1,1</Data>
+ 	  <Data name="Rain"  domain="Categorical">0,1,1,1,0,1,0,0,1,1,0,0,0,0,0</Data>
+      <Data name="Wet"  domain="Categorical">0,0,1,0,0,1,1,1,0,0,0,1,1,1,0</Data>
+  </root>
