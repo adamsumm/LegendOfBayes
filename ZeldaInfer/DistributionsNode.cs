@@ -38,9 +38,11 @@ namespace ZeldaInfer {
         public abstract void SetPriorToPosterior();
         public abstract void SetObservedData(Tuple<int[],double[]> observedValues);
         public abstract double getLogLikelihood(Dictionary<string, Tuple<int[], double[]>> data, int dataPoint);
-        public virtual void LoadAfterSerialization(Range N) {
+        public virtual void LoadAfterSerialization(Range N, Model sharedModel) {
             this.N = N;
+            this.sharedModel = sharedModel;
         }
+        public abstract Tuple<int, double> getPredicted();
         public static void CreateDistributionsNode(ModelNode node, Range N, Model sharedModel) {
             if (node.distributionType == DistributionType.Categorical) {
                 if (node.parents.Count == 0) {
@@ -284,11 +286,11 @@ namespace ZeldaInfer {
             ProbPosterior = SharedProbability.Marginal<Dirichlet>();
             ProbPrior = ProbPosterior;
         }
-        public override void LoadAfterSerialization(Range N) {
-            this.N = N;
-          //  ProbPrior = Variable.New<Dirichlet>().Named("Prob" + node.name + "Prior");
-          //  ProbPrior.ObservedValue = ProbPosterior;
-            Probability = Variable<Vector>.Random(ProbPrior).Named("Prob" + node.name);
+        public override void LoadAfterSerialization(Range N, Model sharedModel) {
+            base.LoadAfterSerialization(N, sharedModel);
+            ProbPrior = ProbPosterior;
+            SharedProbability = SharedVariable<Vector>.Random(ProbPrior).Named("SharedProb" + node.name);
+            Probability = SharedProbability.GetCopyFor(sharedModel).Named(node.name + "Prob"); 
             Probability.SetValueRange(node.states);
         }
         public override string PosteriorToString() {
@@ -304,6 +306,9 @@ namespace ZeldaInfer {
         }
         public override double getLogLikelihood(Dictionary<string,Tuple<int[],double[]>> data, int dataPoint) {
             return new Discrete(ProbPosterior.GetMean()).GetLogProb(data[node.name].Item1[dataPoint]);
+        }
+        public override Tuple<int, double> getPredicted() {
+            return new Tuple<int,double>(new Discrete(ProbPosterior.GetMean()).GetMode(),0);
         }
     }
     [Serializable]
@@ -338,19 +343,21 @@ namespace ZeldaInfer {
             prec = precShared.GetCopyFor(sharedModel).Named(node.name + "s");
 
 
-            // meanPrior.ObservedValue = Gaussian.FromMeanAndPrecision(0, 0.01);
-           // precPrior = Variable.New<Gamma>().Named(node.name + "Prior");
-          //  precPrior.ObservedValue = Gamma.FromMeanAndVariance(0, 100);
             val = Variable.GaussianFromMeanAndPrecision(mean, prec).Named(node.name + "val");
         }
-        public override void LoadAfterSerialization(Range N) {
-            this.N = N; 
-            
+        public override void LoadAfterSerialization(Range N, Model sharedModel) {
+            base.LoadAfterSerialization(N, sharedModel);
             meanPrior = meanPosterior;
-            precPrior = precPosterior;         
-            mean = Variable<double>.Random(meanPrior).Named(node.name + "Mean");
-            prec = Variable<double>.Random(precPrior).Named(node.name + "Prec");
+            precPrior = precPosterior;
+            meanShared = SharedVariable<double>.Random(meanPrior).Named(node.name + "MeanShared");
+            precShared = SharedVariable<double>.Random(precPrior).Named(node.name + "PrecShared");
+            mean = meanShared.GetCopyFor(sharedModel).Named(node.name + "u");
+            prec = precShared.GetCopyFor(sharedModel).Named(node.name + "s");
             val = Variable.GaussianFromMeanAndPrecision(mean, prec).Named(node.name + "val");
+        }
+        public override Tuple<int, double> getPredicted() {
+            meanPosterior = meanShared.Marginal<Gaussian>();
+            return new Tuple<int, double>(0, meanShared.Marginal<Gaussian>().GetMean());
         }
         public override void AddParents() {
             ObservedNumerical = Variable.Array<double>(N).Named(node.name);
@@ -432,17 +439,16 @@ namespace ZeldaInfer {
            
             
         }
-        public override void LoadAfterSerialization(Range N) {
-            this.N = N;
-         //   Bprior = Variable.Array<VectorGaussian>(node.states).Named(node.name + "CoefficientsPrior");
-         //   Bprior.ObservedValue = bPost;
-            B = Variable.Array<Vector>(node.states).Named(node.name + "Coefficients");
-            // The weight vector for each class.
-         //   B[node.states] = Variable<Vector>.Random(Bprior[node.states]);
-        //    mPrior = Variable.Array<Gaussian>(node.states).Named(node.name + "BiasPrior");
-        //    mPrior.ObservedValue = mPost;
-            m = Variable.Array<double>(node.states).Named(node.name + "Bias");
-           // m[node.states] = Variable<double>.Random(mPrior[node.states]);
+        public override void LoadAfterSerialization(Range N, Model sharedModel) {
+            base.LoadAfterSerialization(N, sharedModel);
+            Bprior = bPost;
+            mPrior = mPost;
+            BShared = SharedVariable<Vector>.Random(node.states, (VectorGaussianArray)Distribution<Vector>.Array<VectorGaussian>(Bprior)).Named(node.name + "BShared");
+            B = BShared.GetCopyFor(sharedModel).Named(node.name + "B");
+            mShared = SharedVariable<double>.Random(node.states, (GaussianArray)Distribution<double>.Array<Gaussian>(mPrior)).Named(node.name + "mShared");
+
+
+            m = mShared.GetCopyFor(sharedModel).Named(node.name + "m");
             Variable.ConstrainEqualRandom(B[node.states.SizeAsInt - 1], VectorGaussian.PointMass(Vector.Zero(node.parents.Count)));
             Variable.ConstrainEqualRandom(m[node.states.SizeAsInt - 1], Gaussian.PointMass(0));
         }
@@ -510,6 +516,24 @@ namespace ZeldaInfer {
                 }
                 return new Discrete(softMaxProbs).GetLogProb(data[node.name].Item1[dataPoint]);
         }
+        public override Tuple<int, double> getPredicted() {
+            List<double> parentX = new List<double>();
+            foreach (var parent in node.parents) {
+                parentX.Add(parent.distributions.getPredicted().Item2);
+            }
+            
+            double[] softMaxProbs = new double[node.states.SizeAsInt];
+            double total = 0;
+            for (int ii = 0; ii < node.states.SizeAsInt; ii++){
+                softMaxProbs[ii] = Math.Exp(bPost[ii].GetMean().Inner(Vector.FromArray(parentX.ToArray()) + mPost[ii].GetMean()));
+                total += softMaxProbs[ii];
+            }
+            for (int ii = 0; ii < node.states.SizeAsInt; ii++){
+                softMaxProbs[ii] /= total;
+            }
+
+            return new Tuple<int, double>(new Discrete(softMaxProbs).GetMode(), 0);
+        }
     }
     [Serializable]
     public class SoftmaxOneParentCategorical : DistributionsNode {
@@ -540,7 +564,6 @@ namespace ZeldaInfer {
                     parentStates = parent.states;
                 }
             }
-            Console.WriteLine(node.name + " " + node.states.SizeAsInt + ", " + parentStates.SizeAsInt);
             Bprior = Enumerable.Repeat(Enumerable.Repeat(VectorGaussian.FromMeanAndPrecision(
                 Vector.Zero(node.parents.Count - 1), PositiveDefiniteMatrix.Identity(node.parents.Count - 1)), parentStates.SizeAsInt).ToArray(), node.states.SizeAsInt).ToArray();
             BShared = SharedVariable<Vector[][]>.Random(Variable.Array<Vector>(parentStates), node.states, (VectorGaussianArray2D)Distribution<Vector>.Array<VectorGaussian>(Bprior)).Named(node.name + "BShared");
@@ -554,8 +577,10 @@ namespace ZeldaInfer {
 
 
         }
-        public override void LoadAfterSerialization(Range N) {
-            this.N = N;
+        public override void LoadAfterSerialization(Range N, Model sharedModel) {
+            base.LoadAfterSerialization(N, sharedModel);
+            Bprior = bPost;
+            mPrior = mPost;
             Range parentStates = null;
             foreach (var parent in node.parents) {
                 if (parent.distributionType == DistributionType.Categorical) {
@@ -563,17 +588,13 @@ namespace ZeldaInfer {
                 }
             }
 
-         //   Bprior = Variable.Array(Variable.Array<VectorGaussian>(node.states), parentStates).Named(node.name + "CoefficientsPrior");
-         //   Bprior.ObservedValue = bPost;
-            B = Variable.Array(Variable.Array<Vector>(node.states), parentStates).Named(node.name + "Coefficients");
-            // The weight vector for each class.
-         //   B[parentStates][node.states] = Variable<Vector>.Random(Bprior[parentStates][node.states]);
-         //   mPrior = Variable.Array(Variable.Array<Gaussian>(node.states), parentStates).Named(node.name + "BiasPrior");
-         //   mPrior.ObservedValue = mPost;
-            m = Variable.Array(Variable.Array<double>(node.states), parentStates).Named(node.name + "Bias");
-          //  m[parentStates][node.states] = Variable<double>.Random(mPrior[parentStates][node.states]);
-            Variable.ConstrainEqualRandom(B[parentStates][node.states.SizeAsInt - 1], VectorGaussian.PointMass(Vector.Zero(node.parents.Count)));
-            Variable.ConstrainEqualRandom(m[parentStates][node.states.SizeAsInt - 1], Gaussian.PointMass(0));
+            BShared = SharedVariable<Vector[][]>.Random(Variable.Array<Vector>(parentStates), node.states, (VectorGaussianArray2D)Distribution<Vector>.Array<VectorGaussian>(Bprior)).Named(node.name + "BShared");
+            B = BShared.GetCopyFor(sharedModel).Named(node.name + "B"); ;
+
+            mShared = SharedVariable<double[][]>.Random(Variable.Array<double>(parentStates), node.states, (GaussianArray2D)Distribution<double>.Array<Gaussian>(mPrior)).Named(node.name + "mShared");
+            m = mShared.GetCopyFor(sharedModel).Named(node.name + "m");
+            Variable.ConstrainEqualRandom(B[node.states.SizeAsInt - 1][parentStates], VectorGaussian.PointMass(Vector.Zero(node.parents.Count - 1)));
+            Variable.ConstrainEqualRandom(m[node.states.SizeAsInt - 1][parentStates], Gaussian.PointMass(0));
         }
         public override void AddParents() {
             Observed = Variable.Array<int>(N).Named(node.name);
@@ -669,6 +690,30 @@ namespace ZeldaInfer {
             }
             return new Discrete(softMaxProbs).GetLogProb(data[node.name].Item1[dataPoint]);
         }
+        public override Tuple<int, double> getPredicted() {
+            int parentCategory = 0;// data[node.parents[0].name].Item1[dataPoint];
+            List<double> parentX = new List<double>();
+            foreach (var parent in node.parents) {
+                if (parent.distributionType == DistributionType.Numerical) {
+                    parentX.Add(parent.distributions.getPredicted().Item2);
+                }
+                else {
+                    parentCategory = parent.distributions.getPredicted().Item1;
+                }
+            }
+
+            double[] softMaxProbs = new double[node.states.SizeAsInt];
+            double total = 0;
+            for (int ii = 0; ii < node.states.SizeAsInt; ii++) {
+                softMaxProbs[ii] = Math.Exp(bPost[ii][parentCategory].GetMean().Inner(Vector.FromArray(parentX.ToArray()) + mPost[ii][parentCategory].GetMean()));
+                total += softMaxProbs[ii];
+            }
+            for (int ii = 0; ii < node.states.SizeAsInt; ii++) {
+                softMaxProbs[ii] /= total;
+            }
+
+            return new Tuple<int, double>(new Discrete(softMaxProbs).GetMode(), 0);
+        }
     }
     [Serializable]
     public class LinearRegression : DistributionsNode {
@@ -694,15 +739,14 @@ namespace ZeldaInfer {
             BShared = SharedVariable<Vector>.Random(Bprior).Named(node.name + "BShared"); 
             B = BShared.GetCopyFor(sharedModel).Named(node.name+"B");
         }
-        public override void LoadAfterSerialization(Range N) {
-            this.N = N;
-          //  Bprior = Variable.New<VectorGaussian>().Named(node.name + "CoefficientsPrior");
-     //       Bprior.ObservedValue = bPost;
-            B = Variable<Vector>.Random(Bprior).Named(node.name + "Coefficients");
+        public override void LoadAfterSerialization(Range N, Model sharedModel) {
+            base.LoadAfterSerialization(N, sharedModel);
+            Bprior = bPost;
+            BShared = SharedVariable<Vector>.Random(Bprior).Named(node.name + "BShared");
+            B = BShared.GetCopyFor(sharedModel).Named(node.name + "B");
         }
         public override void AddParents() {
             ObservedNumerical = Variable.Array<double>(N).Named(node.name);
-            //Variable.Multinomial(trialsCount[N], p[N]);
         }
         public override void Infer(InferenceEngine engine) {
             bPost = engine.Infer<VectorGaussian>(B);
@@ -742,8 +786,6 @@ namespace ZeldaInfer {
         }
         public override double getLogLikelihood(Dictionary<string, Tuple<int[], double[]>> data, int dataPoint)
         {
-
-
             List<double> parentX = new List<double>();
             parentX.Add(1);
             foreach (var parent in node.parents)
@@ -752,8 +794,15 @@ namespace ZeldaInfer {
             }
             return Gaussian.FromMeanAndVariance(bPost.GetMean().Inner(Vector.FromArray(parentX.ToArray())), 1.0).GetLogProb(data[node.name].Item2[dataPoint]);
   
-
-            
+        }
+        public override Tuple<int, double> getPredicted() {
+            List<double> parentX = new List<double>();
+            parentX.Add(1);
+            foreach (var parent in node.parents) {
+                parentX.Add(parent.distributions.getPredicted().Item2);
+            }
+         
+            return new Tuple<int, double>(0, bPost.GetMean().Inner(Vector.FromArray(parentX.ToArray())));
         }
     }
     [Serializable]
@@ -783,18 +832,17 @@ namespace ZeldaInfer {
             BShared = SharedVariable<Vector>.Random(parentRange, (VectorGaussianArray)Distribution<Vector>.Array<VectorGaussian>(Bprior)).Named(node.name + "BShared");
             B = BShared.GetCopyFor(sharedModel).Named(node.name + "B");
         }
-        public override void LoadAfterSerialization(Range N) {
-            this.N = N;
+        public override void LoadAfterSerialization(Range N, Model sharedModel) {
+            base.LoadAfterSerialization(N, sharedModel);
+            Bprior = bPost;
             Range parentRange = null;
             foreach (var parent in node.parents) {
                 if (parent.distributionType == DistributionType.Categorical) {
                     parentRange = parent.states;
                 }
             }
-            //Bprior = Variable.Array<VectorGaussian>(parentRange).Named(node.name + "CoefficientsPrior");
-            //Bprior.ObservedValue = bPost;
-            B = Variable.Array<Vector>(parentRange).Named(node.name + "Coefficients");
-         //   B[parentRange] = Variable<Vector>.Random(Bprior[parentRange]);
+            BShared = SharedVariable<Vector>.Random(parentRange, (VectorGaussianArray)Distribution<Vector>.Array<VectorGaussian>(Bprior)).Named(node.name + "BShared");
+            B = BShared.GetCopyFor(sharedModel).Named(node.name + "B");
         }
         public override void AddParents() {
             ObservedNumerical = Variable.Array<double>(N).Named(node.name);
@@ -869,6 +917,20 @@ namespace ZeldaInfer {
             return Gaussian.FromMeanAndVariance(bPost[parentClass].GetMean().Inner(Vector.FromArray(parentX.ToArray())), 1.0).GetLogProb(data[node.name].Item2[dataPoint]);
   
         }
+        public override Tuple<int, double> getPredicted() {
+            List<double> parentX = new List<double>();
+            parentX.Add(1);
+            int parentClass = 0;
+            foreach (var parent in node.parents) {
+                if (parent.distributionType == DistributionType.Categorical) {
+                    parentClass = parent.distributions.getPredicted().Item1;
+                }
+                else {
+                    parentX.Add(parent.distributions.getPredicted().Item2);
+                }
+            }
+            return new Tuple<int, double>(0, bPost[parentClass].GetMean().Inner(Vector.FromArray(parentX.ToArray())));
+        }
     }
     [Serializable]
     public class OneCategoricalParentNodeCategorical : DistributionsNode {
@@ -887,13 +949,12 @@ namespace ZeldaInfer {
             CPT = CPTShared.GetCopyFor(sharedModel).Named(node.name + "CPT");
             CPT.SetValueRange(node.states);
         }
-        public override void LoadAfterSerialization(Range N) {
-            this.N = N;
+        public override void LoadAfterSerialization(Range N, Model sharedModel) {
+            base.LoadAfterSerialization(N, sharedModel);
+            CPTPrior = CPTPosterior;
             Range parentStates = node.parents[0].states;
-        //    CPTPrior = Variable.Array<Dirichlet>(parentStates).Named("Prob" + node.name + "Prior");
-        //    CPTPrior.ObservedValue = CPTPosterior;
-            CPT = Variable.Array<Vector>(parentStates).Named("Prob" + node.name);
-        //    CPT[parentStates] = Variable<Vector>.Random(CPTPrior[parentStates]); // Softmax over feature vector of size 1
+            CPTShared = SharedVariable<Vector>.Random(parentStates, (DirichletArray)Distribution<Vector>.Array<Dirichlet>(CPTPrior)).Named(node.name + "CPTShared");
+            CPT = CPTShared.GetCopyFor(sharedModel).Named(node.name + "CPT");
             CPT.SetValueRange(node.states);
         }
         override public int ParentCount() {
@@ -929,6 +990,10 @@ namespace ZeldaInfer {
             int myValue = (data[node.name].Item1[dataPoint]);
             return new Discrete(CPTPosterior[parentCategory].GetMean()).GetLogProb(myValue);
         }
+        public override Tuple<int, double> getPredicted() {
+            int parentCategory = node.parents[0].distributions.getPredicted().Item1;
+            return new Tuple<int, double>(new Discrete(CPTPosterior[parentCategory].GetMean()).GetMode(), 0);
+        }
     }
     [Serializable]
     public class OneCategoricalParentNodeNumerical : DistributionsNode {
@@ -963,18 +1028,15 @@ namespace ZeldaInfer {
             val = Variable.Array<double>(parentStates).Named(node.name + "val");
             val[parentStates] = Variable.GaussianFromMeanAndPrecision(mean[parentStates], precision[parentStates]);
         }
-        public override void LoadAfterSerialization(Range N) {
-            this.N = N;
+        public override void LoadAfterSerialization(Range N, Model sharedModel) {
+            base.LoadAfterSerialization(N, sharedModel);
+            meanPrior = meanPosterior;
+            precisionPrior = precisionPosterior;
             Range parentStates = node.parents[0].states;
-          //  meanPrior = Variable.Array<Gaussian>(parentStates).Named(node.name + "mean" + "Prior");
-           // meanPrior.ObservedValue = meanPosterior;
-          //  precisionPrior = Variable.Array<Gamma>(parentStates).Named(node.name + "prec" + "Prior");
-         //   precisionPrior.ObservedValue = precisionPosterior;
-            mean = Variable.Array<double>(parentStates).Named(node.name + "mean");
-          //  mean[parentStates] = Variable<double>.Random(meanPrior[parentStates]);
-
-            precision = Variable.Array<double>(parentStates).Named(node.name + "prec");
-         //   precision[parentStates] = Variable<double>.Random(precisionPrior[parentStates]);
+            meanShared = SharedVariable<double>.Random(parentStates, (GaussianArray)Distribution<double>.Array<Gaussian>(meanPrior)).Named(node.name + "uShared");
+            precisionShared = SharedVariable<double>.Random(parentStates, (GammaArray)Distribution<double>.Array<Gamma>(precisionPrior)).Named(node.name + "sShared");
+            mean = meanShared.GetCopyFor(sharedModel).Named(node.name + "u"); 
+            precision = precisionShared.GetCopyFor(sharedModel).Named(node.name + "s"); 
 
             val = Variable.Array<double>(parentStates).Named(node.name + "val");
             val[parentStates] = Variable.GaussianFromMeanAndPrecision(mean[parentStates], precision[parentStates]);
@@ -1008,6 +1070,10 @@ namespace ZeldaInfer {
             double myCategory = data[node.name].Item2[dataPoint];
             return Gaussian.FromMeanAndPrecision(meanPosterior[parentCategory].GetMean(), precisionPrior[parentCategory].GetMean()).GetLogProb(myCategory);
         }
+        public override Tuple<int, double> getPredicted() {
+            int parentCategory = node.parents[0].distributions.getPredicted().Item1;
+            return new Tuple<int, double>(0, meanPosterior[parentCategory].GetMean());
+        }
     }
     /*
     [Serializable]
@@ -1025,8 +1091,8 @@ namespace ZeldaInfer {
             CPT[parent2States][parent1States] = Variable<Vector>.Random(CPTPrior[parent2States][parent1States]); //Softmax with feature vector 
             CPT.SetValueRange(node.states);
         }
-        public override void LoadAfterSerialization(Range N) {
-            this.N = N;
+        public override void LoadAfterSerialization(Range N, Model sharedModel) {
+            base.LoadAfterSerialization(N, sharedModel);
             Range parent1States = node.parents[0].states;
             Range parent2States = node.parents[1].states;
             CPTPrior = Variable.Array(Variable.Array<Dirichlet>(parent1States), parent2States).Named("Prob" + node.name + "Prior");
@@ -1095,8 +1161,8 @@ namespace ZeldaInfer {
             val[parent2States][parent1States] = Variable.GaussianFromMeanAndPrecision(mean[parent2States][parent1States], precision[parent2States][parent1States]);
 
         }
-        public override void LoadAfterSerialization(Range N) {
-            this.N = N;
+        public override void LoadAfterSerialization(Range N, Model sharedModel) {
+            base.LoadAfterSerialization(N, sharedModel);
             Range parent1States = node.parents[0].states;
             Range parent2States = node.parents[1].states;
             meanPrior = Variable.Array(Variable.Array<Gaussian>(parent1States), parent2States).Named(node.name + "mean" + "Prior");
@@ -1168,8 +1234,8 @@ namespace ZeldaInfer {
             CPT[parent2States, parent3States][parent1States] = Variable<Vector>.Random(CPTPrior[parent2States, parent3States][parent1States]);
             CPT.SetValueRange(node.states);
         }
-        public override void LoadAfterSerialization(Range N) {
-            this.N = N;
+        public override void LoadAfterSerialization(Range N, Model sharedModel) {
+            base.LoadAfterSerialization(N, sharedModel);
             Range parent1States = node.parents[0].states;
             Range parent2States = node.parents[1].states;
             Range parent3States = node.parents[2].states;

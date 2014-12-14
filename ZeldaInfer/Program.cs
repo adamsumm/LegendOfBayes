@@ -43,7 +43,7 @@ namespace ZeldaInfer {
             BinaryFormatter formatter = new BinaryFormatter();
             Stream stream = new FileStream("temp.bin", FileMode.Open, FileAccess.Read, FileShare.Read);
             GraphicalModel model = (GraphicalModel)formatter.Deserialize(stream);
-            model.LoadAfterSerialization("WetRainSprinkler3.xml");
+       //     model.LoadAfterSerialization("WetRainSprinkler3.xml");
             stream.Close();
 
         }
@@ -78,21 +78,7 @@ namespace ZeldaInfer {
 				dungeon.WriteStats(output, path);
 			}
 		}
-		static void CreateGraphicalModelFiles(string inputFile, string networkFilename) {
-            string[] summaries = new string[]{
-                "Summaries/LA1.xml","Summaries/LA2.xml","Summaries/LA3.xml",
-                "Summaries/LA4.xml","Summaries/LA6.xml","Summaries/LA7.xml",
-                "Summaries/LA8.xml","Summaries/LoZ1.xml","Summaries/LoZ2.xml",
-                "Summaries/LoZ21.xml","Summaries/LoZ22.xml","Summaries/LoZ24.xml",
-                "Summaries/LoZ25.xml","Summaries/LoZ26.xml","Summaries/LoZ27.xml",
-                "Summaries/LoZ28.xml","Summaries/LoZ29.xml","Summaries/LoZ3.xml",
-                "Summaries/LoZ4.xml","Summaries/LoZ5.xml","Summaries/LoZ7.xml",
-                "Summaries/LoZ8.xml","Summaries/LoZ9.xml","Summaries/LttP1.xml",
-                "Summaries/LttP10.xml","Summaries/LttP11.xml","Summaries/LttP2.xml",
-                "Summaries/LttP3.xml","Summaries/LttP4.xml","Summaries/LttP5.xml",
-                "Summaries/LttP6.xml","Summaries/LttP7.xml","Summaries/LttP8.xml",
-                "Summaries/LttP9.xml",
-            };
+		static void CreateGraphicalModelFiles(string[] summaries, string inputFile, string networkFilename,string dataFilename) {
             HashSet<string> wholeLevelParameters = new HashSet<string>(){
                 "roomsInLevel",  "enemyRoomsInLevel",  "puzzleRoomsInLevel",
                 "itemRoomsInLevel",  "doorsInLevel",  "passableDoorsInLevel",
@@ -222,8 +208,9 @@ namespace ZeldaInfer {
                 dataDoc.Root.Add(new XElement("Data",new XAttribute("domain",domain), new XAttribute("name", param.Key),string.Join(",",param.Value.Substring(0,param.Value.Length-1).Split(';').Select(p => categories[param.Key].IndexOf(p)))  ));
               //  Console.WriteLine(param.Key + " = [" + string.Join(",",param.Value.Substring(0,param.Value.Length-1).Split(';')) + "]");
             }
-            dataDoc.Save("dungeonNetworkData.xml");
+            dataDoc.Save(dataFilename);
 		}
+        /*
         static Tuple<GraphicalModel, Dictionary<string, Tuple<int[],double[]>>> CreateGraphicalModel(string modelFile, string dataFile)
         {
 
@@ -238,6 +225,22 @@ namespace ZeldaInfer {
             }
 
             return new Tuple<GraphicalModel,Dictionary<string,Tuple<int[],double[]>>>(model,observedData);
+        }
+        */
+        static Tuple<GraphicalModel, Dictionary<string, Tuple<int[], double[]>>> CreateGraphicalModel(string modelFile, string dataFile) {
+
+            GraphicalModel model = new GraphicalModel(modelFile, 13);
+            model.CreateNetwork();
+           
+            Dictionary<string, Tuple<int[], double[]>> observedData = GraphicalModel.LoadData(dataFile);
+            model.LearnParameters(observedData);
+            BinaryFormatter serializer = new BinaryFormatter();
+
+            using (FileStream stream = new FileStream(modelFile.Substring(0, modelFile.LastIndexOf(".")) + "bin", FileMode.Create)) {
+                serializer.Serialize(stream, model);
+            }
+
+            return new Tuple<GraphicalModel, Dictionary<string, Tuple<int[], double[]>>>(model, observedData);
         }
 
         static double evaluate(GraphicalModel model, Dictionary<string, Tuple<int[], double[]>> data)
@@ -297,15 +300,31 @@ namespace ZeldaInfer {
             return loglikelihood - d/2.0 * Math.Log(N);
         }
 
-        static Tuple<GraphicalModel,Dictionary<string, Tuple<int[],double[]>>> ModelNetworkSerialized() {
+        static Tuple<GraphicalModel,Dictionary<string, Tuple<int[],double[]>>> ModelNetworkSerialized(string binary, string network, string data) {
             BinaryFormatter formatter = new BinaryFormatter();
-            Stream stream = new FileStream("learnedDungeonNetworkData.bin", FileMode.Open, FileAccess.Read, FileShare.Read);
+            Stream stream = new FileStream(binary, FileMode.Open, FileAccess.Read, FileShare.Read);
             GraphicalModel model = (GraphicalModel)formatter.Deserialize(stream);
-            Dictionary<string, Tuple<int[],double[]>> observedData = GraphicalModel.LoadData("dungeonNetworkData.xml");
+            Dictionary<string, Tuple<int[],double[]>> observedData = GraphicalModel.LoadData(data);
 
-            model.LoadAfterSerialization("dungeonNetwork.xml");
+            model.LoadAfterSerialization(network,1);
             stream.Close();
             return new Tuple<GraphicalModel,Dictionary<string,Tuple<int[],double[]>>>(model,observedData);
+        }
+        static void Infer(GraphicalModel model,Dictionary<string,Tuple<int[],double[]>> data, List<string> inferred){
+            foreach (var varName in inferred) {
+                data.Remove(varName);
+            }
+            model.LearnParameters(data);
+            foreach (var varName in inferred) {
+                var prediction = model.nodes[varName].distributions.getPredicted();
+                if (model.nodes[varName].distributionType == DistributionType.Categorical) {
+                    Console.WriteLine("Predicted Value is " + prediction.Item1);
+                }
+                else {
+                    Console.WriteLine("Predicted Value is " + prediction.Item2);
+                }
+            }
+            
         }
 		static void Main(string[] args) {
       //      RunAllLevels();
@@ -313,32 +332,44 @@ namespace ZeldaInfer {
             //GraphicalModel model = CreateGraphicalModel();
           //  InferTest.Test2();
 
+            List<string> predicted = new List<string>();
+            predicted.Add("roomsInLevel");
 
+            string[] summaries = new string[]{
+                "Summaries/LttP1.xml"
+            };
+            string downloadedFilenmae = "Random.xml"; 
+            string variantName = "RandomNetwork.xml"; //CHANGE THIS
+            string dataFile = "LA1Test.xml";
+            CreateGraphicalModelFiles(summaries, downloadedFilenmae, variantName, dataFile); //FILE CONVERSION
+            //  CreateGraphicalModel();
           //  var output = ModelNetworkSprinklerFile();
-           // var output = ModelNetworkSerialized();
-
+            var output = ModelNetworkSerialized("learnedDungeonNetworkData.bin", "dungeonNetwork.xml", dataFile);
+            Infer(output.Item1, output.Item2, predicted);
         //    ModelNetworkSprinklerSerialized();
 
-
+ //CHANGE THIS
+            //       string variantName = "RandomNetwork.xml"; //CHANGE THIS
+            //  CreateGraphicalModelFiles(downloadedFilenmae, variantName); //FILE CONVERSION
           //  CreateGraphicalModel();
         //    Dictionary<string, Tuple<int[], double[]>> observedData = GraphicalModel.LoadData("dungeonNetworkData.xml");
-            string downloadedFilenmae = "Naive Bayes.xml"; //CHANGE THIS
-            string variantName = "NaiveBayes.xml"; //CHANGE THIS
-            CreateGraphicalModelFiles(downloadedFilenmae, variantName); //FILE CONVERSION
+     //       string downloadedFilenmae = "Random.xml"; //CHANGE THIS
+     //       string variantName = "RandomNetwork.xml"; //CHANGE THIS
+          //  CreateGraphicalModelFiles(downloadedFilenmae, variantName); //FILE CONVERSION
 
 
-            downloadedFilenmae = "BayesNetwork.xml"; //CHANGE THIS
-            variantName = "dungeonNetwork.xml"; //CHANGE THIS
-            CreateGraphicalModelFiles(downloadedFilenmae, variantName); //FILE CONVERSION
-            var output = CreateGraphicalModel(variantName, "dungeonNetworkData.xml"); // LEARNING HAPPENS
+          //  downloadedFilenmae = "BayesNetwork.xml"; //CHANGE THIS
+          //  variantName = "dungeonNetwork.xml"; //CHANGE THIS
+           // CreateGraphicalModelFiles(downloadedFilenmae, variantName); //FILE CONVERSION
+         //   var output = CreateGraphicalModel("SuperSimple.xml", "dungeonNetworkData.xml"); // LEARNING HAPPENS
 
-            double evaluationMetric = evaluate(output.Item1, output.Item2);
+      //      double evaluationMetric = evaluate(output.Item1, output.Item2);
 
-            Console.WriteLine(evaluationMetric);
-            output = ModelNetworkSerialized();
-            evaluationMetric = evaluate(output.Item1, output.Item2);
+         //   Console.WriteLine(evaluationMetric);
+         //   output = ModelNetworkSerialized();
+         //   evaluationMetric = evaluate(output.Item1, output.Item2);
 
-            Console.WriteLine(evaluationMetric);
+     //       Console.WriteLine(evaluationMetric);
 			Console.WriteLine("ALL DONE :)");
 			Console.Read();
 		}

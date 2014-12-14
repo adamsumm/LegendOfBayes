@@ -110,46 +110,32 @@ namespace ZeldaInfer {
             return outArray;
         }
         public void LearnParameters(Dictionary<string, Tuple<int[], double[]>> observedData) {
-           // int numberOfEntries = 0;
             Dictionary<string, Tuple<int[][], double[][]>> chunkedData = new Dictionary<string, Tuple<int[][], double[][]>>();
             foreach (KeyValuePair<string,ModelNode> kvPair in nodes){                
-                if (kvPair.Value.distributionType == DistributionType.Categorical) {
-                    chunkedData[kvPair.Key] = new Tuple<int[][],double[][]>(splitArray<int>(observedData[kvPair.Key].Item1, sharedModel.BatchCount),null);
-                  //   numberOfEntries = observedData[kvPair.Key].Item1.Length;
-                }
-                else if (kvPair.Value.distributionType == DistributionType.Numerical) {
-                    chunkedData[kvPair.Key] = new Tuple<int[][], double[][]>(null, splitArray<double>(observedData[kvPair.Key].Item2, sharedModel.BatchCount));
-                 //   numberOfEntries = observedData[kvPair.Key].Item2.Length;
-                }
-                
-             //   kvPair.Value.distributions.SetObservedData(observedData[kvPair.Key]);
-            }
-          //  NumberOfExamples.ObservedValue = numberOfEntries;
-            double count = 0;
-            double total = nodes.Count;
-            /*
-            foreach (ModelNode node in nodes.Values) {
-                //node.distributions.Infer(Engine);
-                count += 1;
-                Console.WriteLine(count / total);
-            }
-            */
-            for (int ii = 0; ii < sharedModel.BatchCount; ii++) {
-                Console.WriteLine((ii + 1) + "/" + sharedModel.BatchCount + " : " + ((double)(ii + 1)) / ((double)sharedModel.BatchCount));
-                int numberOfEntries = 0;
-                foreach (KeyValuePair<string, ModelNode> kvPair in nodes) {
+                if (observedData.ContainsKey(kvPair.Key)){
                     if (kvPair.Value.distributionType == DistributionType.Categorical) {
-                        NumberOfExamples.ObservedValue = chunkedData[kvPair.Key].Item1[ii].Length;
-                        kvPair.Value.distributions.SetObservedData(new Tuple<int[], double[]>(chunkedData[kvPair.Key].Item1[ii], null));
-                        //   numberOfEntries = observedData[kvPair.Key].Item1.Length;
+                        chunkedData[kvPair.Key] = new Tuple<int[][],double[][]>(splitArray<int>(observedData[kvPair.Key].Item1, sharedModel.BatchCount),null);
                     }
                     else if (kvPair.Value.distributionType == DistributionType.Numerical) {
-                        NumberOfExamples.ObservedValue = chunkedData[kvPair.Key].Item2[ii].Length;
-                        kvPair.Value.distributions.SetObservedData(new Tuple<int[], double[]>(null,chunkedData[kvPair.Key].Item2[ii]));
-                        //   numberOfEntries = observedData[kvPair.Key].Item2.Length;
+                        chunkedData[kvPair.Key] = new Tuple<int[][], double[][]>(null, splitArray<double>(observedData[kvPair.Key].Item2, sharedModel.BatchCount));
                     }
-
-                   // kvPair.Value.distributions.SetObservedData(observedData[kvPair.Key]);
+                }
+            }
+            double total = nodes.Count;
+            for (int ii = 0; ii < sharedModel.BatchCount; ii++) {
+                Console.WriteLine((ii + 1) + "/" + sharedModel.BatchCount + " : " + ((double)(ii + 1)) / ((double)sharedModel.BatchCount));
+                foreach (KeyValuePair<string, ModelNode> kvPair in nodes) {
+                           
+                    if (observedData.ContainsKey(kvPair.Key)){
+                        if (kvPair.Value.distributionType == DistributionType.Categorical) {
+                            NumberOfExamples.ObservedValue = chunkedData[kvPair.Key].Item1[ii].Length;
+                            kvPair.Value.distributions.SetObservedData(new Tuple<int[], double[]>(chunkedData[kvPair.Key].Item1[ii], null));
+                         }
+                        else if (kvPair.Value.distributionType == DistributionType.Numerical) {
+                            NumberOfExamples.ObservedValue = chunkedData[kvPair.Key].Item2[ii].Length;
+                            kvPair.Value.distributions.SetObservedData(new Tuple<int[], double[]>(null,chunkedData[kvPair.Key].Item2[ii]));
+                         }
+                    }
                 }
                 sharedModel.InferShared(Engine, ii);
 
@@ -178,11 +164,12 @@ namespace ZeldaInfer {
             }
             return data;
         }
-        public void LoadAfterSerialization(string filename) {
+        public void LoadAfterSerialization(string filename, int batches) {
             XDocument xdoc = XDocument.Load(filename);
             List<Tuple<string, string>> edges = new List<Tuple<string, string>>();
             List<Tuple<string, string, string>> nodeParams = new List<Tuple<string, string, string>>();
-
+            sharedModel = new Model(batches);
+            Engine = new InferenceEngine(new VariationalMessagePassing());
            //     Engine.Compiler.UseParallelForLoops = true;
             rangeCategories = new Dictionary<string, Tuple<string[], Range>>();
             foreach (var element in xdoc.Descendants()) {
@@ -207,9 +194,11 @@ namespace ZeldaInfer {
             foreach (var node in nodeParams) {
                 nodes[node.Item1].distributionType = (DistributionType)Enum.Parse(typeof(DistributionType), node.Item3);
                 nodes[node.Item1].states = rangeCategories[node.Item2].Item2;
-            //    nodes[node.Item1].distributions.LoadAfterSerialization(N);
             }
-            /*
+
+            foreach (var node in nodeParams) {
+                nodes[node.Item1].distributions.LoadAfterSerialization(N, sharedModel);
+            }
             List<ModelNode> completed = new List<ModelNode>();
             foreach (ModelNode node in independentNodes.Values) {
                 node.distributions.AddParents();
@@ -232,7 +221,7 @@ namespace ZeldaInfer {
                     }
                 }
             }
-             */
+            
         }
     }
 }

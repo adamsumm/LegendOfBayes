@@ -100,7 +100,7 @@ namespace ZeldaInfer.LevelParse {
             }
             HeapPriorityQueue<SearchAgent> openSet = new HeapPriorityQueue<SearchAgent>(8000000);
             HashSet<SearchAgent> closedSet = new HashSet<SearchAgent>();
-            Dictionary<int,double> gScore = new Dictionary<int,double>();
+            Dictionary<int, double> gScore = new Dictionary<int, double>();
             SearchAgent current = new SearchAgent(null, 0, 0, false, requiresBigKey, 0, 0,  start);
             gScore[current.GetHashCode()] = 0;
             openSet.Enqueue(current, 0);
@@ -138,6 +138,7 @@ namespace ZeldaInfer.LevelParse {
                                 openSet.Enqueue(child, tentativeGScore);
                             }
                             else if (gScore[child.GetHashCode()] > tentativeGScore) {
+                                
                               //  gScore[child.GetHashCode()] = tentativeGScore;
                              //   openSet.UpdatePriority(child, tentativeGScore);
                             }
