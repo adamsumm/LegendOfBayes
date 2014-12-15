@@ -72,6 +72,9 @@
     <Compile Include="GraphicalModel.cs" />
     <Compile Include="InferFactors.cs" />
     <Compile Include="InferTest.cs" />
+    <Compile Include="ModelNodeNonShared.cs" />
+    <Compile Include="NonSharedGraphicalModel.cs" />
+    <Compile Include="NonShareDistributionNodes.cs" />
     <Compile Include="PriorityQueue\HeapPriorityQueue.cs" />
     <Compile Include="PriorityQueue\IPriorityQueue.cs" />
     <Compile Include="LevelParse\Door.cs" />

@@ -114,9 +114,6 @@ namespace ZeldaInfer.LevelParse {
                         return current;
                     }
                 }
-                if (current.currentRoom.type.Contains("S1")) {
-                    bool stophere = true;
-                }
                 {
                     List<SearchAgent> children = current.GetChildren();
                     foreach (var child in children) {

@@ -441,6 +441,7 @@ namespace ZeldaInfer {
         }
         public override void LoadAfterSerialization(Range N, Model sharedModel) {
             base.LoadAfterSerialization(N, sharedModel);
+            this.firstTime = true;
             Bprior = bPost;
             mPrior = mPost;
             BShared = SharedVariable<Vector>.Random(node.states, (VectorGaussianArray)Distribution<Vector>.Array<VectorGaussian>(Bprior)).Named(node.name + "BShared");
@@ -579,6 +580,7 @@ namespace ZeldaInfer {
         }
         public override void LoadAfterSerialization(Range N, Model sharedModel) {
             base.LoadAfterSerialization(N, sharedModel);
+            this.firstTime = true;
             Bprior = bPost;
             mPrior = mPost;
             Range parentStates = null;
@@ -741,6 +743,7 @@ namespace ZeldaInfer {
         }
         public override void LoadAfterSerialization(Range N, Model sharedModel) {
             base.LoadAfterSerialization(N, sharedModel);
+            this.firstTime = true;
             Bprior = bPost;
             BShared = SharedVariable<Vector>.Random(Bprior).Named(node.name + "BShared");
             B = BShared.GetCopyFor(sharedModel).Named(node.name + "B");
@@ -834,6 +837,7 @@ namespace ZeldaInfer {
         }
         public override void LoadAfterSerialization(Range N, Model sharedModel) {
             base.LoadAfterSerialization(N, sharedModel);
+            this.firstTime = true;
             Bprior = bPost;
             Range parentRange = null;
             foreach (var parent in node.parents) {

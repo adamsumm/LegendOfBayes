@@ -29,6 +29,7 @@ namespace ZeldaInfer.LevelParse {
             }
         }
         public bool switchSet(string sw) {
+          
             if (currentRoom.type.Contains(sw)) {
                 return canAdd;
             }
@@ -162,6 +163,7 @@ namespace ZeldaInfer.LevelParse {
                        
                         foreach (var type in door.lock1.Split(new char[] {','})) {
                             if (type.Contains("S")) {
+                                
                                 if (!switchSet(type)) {
                                     canContinue = false;
                                     break;
