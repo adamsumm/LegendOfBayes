@@ -1,0 +1,111 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <Category name="roomsInLevelCategory" categories="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25" domain="Numerical" />
+  <Category name="enemyRoomsInLevelCategory" categories="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21" domain="Numerical" />
+  <Category name="puzzleRoomsInLevelCategory" categories="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19" domain="Numerical" />
+  <Category name="itemRoomsInLevelCategory" categories="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16" domain="Numerical" />
+  <Category name="doorsInLevelCategory" categories="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30" domain="Numerical" />
+  <Category name="passableDoorsInLevelCategory" categories="0" domain="Numerical" />
+  <Category name="lockedDoorsInLevelCategory" categories="0,1,2,3,4,5,6,7,8,9,10" domain="Numerical" />
+  <Category name="bombLockedDoorsInLevelCategory" categories="0,1,2,3,4,5,6,7,8,9,10,11" domain="Numerical" />
+  <Category name="bigKeyDoorsInLevelCategory" categories="0,1,2" domain="Numerical" />
+  <Category name="oneWayDoorsInLevelCategory" categories="0,1,2,3,4,5,6,7,8,9,10,11,12" domain="Numerical" />
+  <Category name="itemLockedDoorsInLevelCategory" categories="0,1,2,3,4,5,6,7,8" domain="Numerical" />
+  <Category name="puzzleLockedDoorsInLevelCategory" categories="0,1,2,3,4,5,6" domain="Numerical" />
+  <Category name="softLockedDoorsInLevelCategory" categories="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18" domain="Numerical" />
+  <Category name="lookAheadsInLevelCategory" categories="0,1,2,3,4,5,6,7,8,9" domain="Numerical" />
+  <Category name="totalCrossingsCategory" categories="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26" domain="Numerical" />
+  <Category name="maximumCrossingsCategory" categories="0,1,2,3,4" domain="Numerical" />
+  <Category name="maximumDistanceToPathCategory" categories="0,1,2,3,4,5,6" domain="Numerical" />
+  <Category name="pathLengthCategory" categories="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26" domain="Numerical" />
+  <Category name="roomsOnPathCategory" categories="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23" domain="Numerical" />
+  <Category name="enemyRoomsOnPathCategory" categories="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17" domain="Numerical" />
+  <Category name="puzzleRoomsOnPathCategory" categories="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21" domain="Numerical" />
+  <Category name="itemRoomsOnPathCategory" categories="0,1,2,3,4,5,6,7,8,9,10,11,12,13" domain="Numerical" />
+  <Category name="doorsOnPathCategory" categories="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31" domain="Numerical" />
+  <Category name="lockedDoorsOnPathCategory" categories="0,1,2,3,4,5,6,7,8,9,10,11,12" domain="Numerical" />
+  <Category name="bombLockedDoorsOnPathCategory" categories="0,1,2,3,4,5,6,7,8,9,10,11" domain="Numerical" />
+  <Category name="bigKeyLockedDoorsOnPathCategory" categories="0,1,2,3" domain="Numerical" />
+  <Category name="itemLockedDoorsOnPathCategory" categories="0,1,2,3,4,5,6,7,8" domain="Numerical" />
+  <Category name="softLockedDoorsOnPathCategory" categories="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19" domain="Numerical" />
+  <Category name="puzzleLockedDoorsOnPathCategory" categories="0,1,2,3,4,5,6,7" domain="Numerical" />
+  <Category name="lookAheadsOnPathCategory" categories="0,1,2,3,4,5,6,7,8,9,10,11" domain="Numerical" />
+  <Category name="oneWayDoorsOnPathCategory" categories="0,1,2,3,4,5,6,7,8,9" domain="Numerical" />
+  <Category name="distanceToDungeonKeyCategory" categories="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15" domain="Numerical" />
+  <Category name="distanceToSpecialItemCategory" categories="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21" domain="Numerical" />
+  <Category name="doorTypesFromCategory" categories="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,144,145,146,147,148,149,150,151,152,153,154,155,156,157,158,159,160,161,162,163,164,165,166,167,168,169,170,171,172,173,174,175,176,177,178,179,180,181,182,183" domain="Categorical" />
+  <Category name="doorCameFromCategory" categories="0,1,2,3,4,5,6,7,8,9,10,11" domain="Categorical" />
+  <Category name="doorTypesToCategory" categories="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,144,145,146,147,148,149,150,151,152,153,154,155,156,157,158,159,160,161,162,163,164,165,166,167,168,169,170,171,172,173,174,175,176,177,178,179,180,181,182,183" domain="Categorical" />
+  <Category name="doorGoToCategory" categories="0,1,2,3,4,5,6,7,8,9,10" domain="Categorical" />
+  <Category name="crossingsCategory" categories="0,1,2,3,4,5" domain="Numerical" />
+  <Category name="depthCategory" categories="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72" domain="Numerical" />
+  <Category name="pureDepthCategory" categories="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33" domain="Numerical" />
+  <Category name="distanceOfRoomToOptimalPathCategory" categories="0,1,2,3,4,5,6" domain="Numerical" />
+  <Category name="numberOfNeighborsCategory" categories="0,1,2,3,4,5,6,7" domain="Numerical" />
+  <Category name="roomTypeCategory" categories="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47" domain="Categorical" />
+  <Category name="roomCameFromCategory" categories="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35" domain="Categorical" />
+  <Category name="roomGoToCategory" categories="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40" domain="Categorical" />
+  <Category name="enemyNeighborsCategory" categories="0,1,2,3,4,5,6" domain="Numerical" />
+  <Category name="puzzleNeighborsCategory" categories="0,1,2,3,4,5,6" domain="Numerical" />
+  <Category name="itemNeighborsCategory" categories="0,1,2,3,4" domain="Numerical" />
+  <Category name="doorsToNeighborsCategory" categories="0,1,2,3,4,5,6,7" domain="Numerical" />
+  <Category name="passableToNeighborsCategory" categories="0,1,2,3,4,5,6" domain="Numerical" />
+  <Category name="lockedToNeighborsCategory" categories="0,1,2,3,4" domain="Numerical" />
+  <Category name="bombLockedToNeighborsCategory" categories="0,1,2,3,4" domain="Numerical" />
+  <Category name="itemLockedToNeighborsCategory" categories="0,1,2,3" domain="Numerical" />
+  <Category name="puzzleLockedToNeighborsCategory" categories="0,1,2" domain="Numerical" />
+  <Category name="softLockedToNeighborsCategory" categories="0,1,2,3" domain="Numerical" />
+  <Category name="bigKeyLockedToNeighborsCategory" categories="0,1" domain="Numerical" />
+  <Category name="oneWayLockedToNeighborsCategory" categories="0,1,2,3" domain="Numerical" />
+  <Category name="lookAheadToNeighborsCategory" categories="0,1,2,3,4,5" domain="Numerical" />
+  <Category name="passableFromNeighborsCategory" categories="0,1,2,3,4,5,6" domain="Numerical" />
+  <Category name="lockedFromNeighborsCategory" categories="0,1,2,3,4" domain="Numerical" />
+  <Category name="bombLockedFromNeighborsCategory" categories="0,1,2,3,4" domain="Numerical" />
+  <Category name="itemLockedFromNeighborsCategory" categories="0,1,2,3" domain="Numerical" />
+  <Category name="puzzleLockedFromNeighborsCategory" categories="0,1,2" domain="Numerical" />
+  <Category name="softLockedFromNeighborsCategory" categories="0,1,2,3" domain="Numerical" />
+  <Category name="bigKeyLockedFromNeighborsCategory" categories="0,1" domain="Numerical" />
+  <Category name="oneWayLockedFromNeighborsCategory" categories="0,1,2,3" domain="Numerical" />
+  <Category name="lookAheadFromNeighborsCategory" categories="0,1,2,3,4,5" domain="Numerical" />
+  <Node name="roomsInLevel" category="roomsInLevelCategory" domain="Numerical" />
+  <Node name="doorsInLevel" category="doorsInLevelCategory" domain="Numerical" />
+  <Node name="crossings" category="crossingsCategory" domain="Numerical" />
+  <Node name="pathLength" category="pathLengthCategory" domain="Numerical" />
+  <Node name="distanceOfRoomToOptimalPath" category="distanceOfRoomToOptimalPathCategory" domain="Numerical" />
+  <Node name="depth" category="depthCategory" domain="Numerical" />
+  <Node name="roomType" category="roomTypeCategory" domain="Categorical" />
+  <Node name="numberOfNeighbors" category="numberOfNeighborsCategory" domain="Numerical" />
+  <Node name="roomCameFrom" category="roomCameFromCategory" domain="Categorical" />
+  <Node name="doorCameFrom" category="doorCameFromCategory" domain="Categorical" />
+  <Node name="doorGoTo" category="doorGoToCategory" domain="Categorical" />
+  <Node name="roomGoTo" category="roomGoToCategory" domain="Categorical" />
+  <Node name="pureDepth" category="pureDepthCategory" domain="Numerical" />
+  <Edge parent="roomsInLevel" child="doorsInLevel" />
+  <Edge parent="roomsInLevel" child="pathLength" />
+  <Edge parent="doorsInLevel" child="pathLength" />
+  <Edge parent="pathLength" child="depth" />
+  <Edge parent="depth" child="roomType" />
+  <Edge parent="depth" child="crossings" />
+  <Edge parent="roomsInLevel" child="depth" />
+  <Edge parent="depth" child="distanceOfRoomToOptimalPath" />
+  <Edge parent="depth" child="numberOfNeighbors" />
+  <Edge parent="roomType" child="numberOfNeighbors" />
+  <Edge parent="roomType" child="distanceOfRoomToOptimalPath" />
+  <Edge parent="depth" child="doorCameFrom" />
+  <Edge parent="depth" child="doorGoTo" />
+  <Edge parent="roomCameFrom" child="roomType" />
+  <Edge parent="roomsInLevel" child="roomType" />
+  <Edge parent="roomType" child="doorGoTo" />
+  <Edge parent="roomCameFrom" child="doorCameFrom" />
+  <Edge parent="doorsInLevel" child="numberOfNeighbors" />
+  <Edge parent="doorGoTo" child="roomGoTo" />
+  <Edge parent="depth" child="roomGoTo" />
+  <Edge parent="pureDepth" child="crossings" />
+  <Edge parent="roomsInLevel" child="pureDepth" />
+  <Edge parent="pureDepth" child="roomType" />
+  <Edge parent="pureDepth" child="distanceOfRoomToOptimalPath" />
+  <Edge parent="pureDepth" child="numberOfNeighbors" />
+  <Edge parent="pureDepth" child="roomCameFrom" />
+  <Edge parent="pureDepth" child="doorCameFrom" />
+  <Edge parent="pureDepth" child="doorGoTo" />
+</root>
