@@ -74,7 +74,8 @@ namespace ZeldaInfer {
                             node.distributions = new SoftmaxCategorical(node, sharedModel);
                         }
                         else if (numCategorical == 1) {
-                         //   throw new ArgumentException("Continuous to Categorical only covered for basic Softmax");
+                            //   throw new ArgumentException("Continuous to Categorical only covered for basic Softmax");
+                            //throw new ArgumentException("Continuous to Categorical only covered for basic Softmax");
                             node.distributions = new SoftmaxOneParentCategorical(node, sharedModel);
                         }
                         else if (numCategorical == 2) {
@@ -261,7 +262,6 @@ namespace ZeldaInfer {
         public Variable<Vector> Probability;
         [NonSerialized]
         public Dirichlet ProbPrior;
-        [NonSerialized]
         public Dirichlet ProbPosterior;
         override public int ParentCount() {
             return 0;
@@ -455,7 +455,8 @@ namespace ZeldaInfer {
         }
         public override void AddParents() {
             Observed = Variable.Array<int>(N).Named(node.name);
-            Observed.SetValueRange(node.states);
+            Observed[N].SetValueRange(node.states);
+          //  Observed.SetValueRange(node.states);
             //Variable.Multinomial(trialsCount[N], p[N]);
         }
         public override void Infer(InferenceEngine engine) {
@@ -495,8 +496,11 @@ namespace ZeldaInfer {
                 g[N][node.states] = Variable.InnerProduct(B[node.states], (x[N])) + m[node.states];
                 var p = Variable.Array<Vector>(N).Named("p" + node.name);
                 p[N] = Variable.Softmax(g[N]);
-                using (Variable.ForEach(N))
-                    Observed[N] = Variable.Discrete(p[N]);
+                using (Variable.ForEach(N)) {
+                    var d = Variable.Discrete(p[N]);
+                    d.SetValueRange(node.states);
+                    Observed[N] = d;
+                }
 
             }
         }
@@ -600,7 +604,7 @@ namespace ZeldaInfer {
         }
         public override void AddParents() {
             Observed = Variable.Array<int>(N).Named(node.name);
-            Observed.SetValueRange(node.states);
+            Observed[N].SetValueRange(node.states);
             //Variable.Multinomial(trialsCount[N], p[N]);
         }
         public override void Infer(InferenceEngine engine) {
@@ -660,9 +664,13 @@ namespace ZeldaInfer {
                         parentObserved = parent.distributions.Observed;
                     }
                 }
-                using (Variable.ForEach(N))
-                using (Variable.Switch(parentObserved[N]))
-                    Observed[N] = Variable.Discrete(p[parentObserved[N]][N]);
+                using (Variable.ForEach(N)) {
+                    using (Variable.Switch(parentObserved[N])) {
+                        var d = Variable.Discrete(p[parentObserved[N]][N]);
+                        d.SetValueRange(node.states);
+                        Observed[N] = d;
+                    }
+                }
             }
         }
         public override double getLogLikelihood(Dictionary<string, Tuple<int[], double[]>> data, int dataPoint) //prob needs fix
@@ -1079,383 +1087,4 @@ namespace ZeldaInfer {
             return new Tuple<int, double>(0, meanPosterior[parentCategory].GetMean());
         }
     }
-    /*
-    [Serializable]
-    public class TwoCategoricalParentNodeCategorical : DistributionsNode {
-        [NonSerialized] public VariableArray<VariableArray<Vector>, Vector[][]> CPT;
-        [NonSerialized] public VariableArray<VariableArray<Dirichlet>, Dirichlet[][]> CPTPrior;
-        public Dirichlet[][] CPTPosterior;
-        public TwoCategoricalParentNodeCategorical(ModelNode node) {
-            this.node = node;
-            Range parent1States = node.parents[0].states;
-            Range parent2States = node.parents[1].states;
-            CPTPrior = Variable.Array(Variable.Array<Dirichlet>(parent1States), parent2States).Named("Prob" + node.name + "Prior");
-            CPTPrior.ObservedValue = Enumerable.Repeat(Enumerable.Repeat(Dirichlet.Uniform(node.states.SizeAsInt), parent1States.SizeAsInt).ToArray(), parent2States.SizeAsInt).ToArray(); ;
-            CPT = Variable.Array(Variable.Array<Vector>(parent1States), parent2States).Named("Prob" + node.name);
-            CPT[parent2States][parent1States] = Variable<Vector>.Random(CPTPrior[parent2States][parent1States]); //Softmax with feature vector 
-            CPT.SetValueRange(node.states);
-        }
-        public override void LoadAfterSerialization(Range N, Model sharedModel) {
-            base.LoadAfterSerialization(N, sharedModel);
-            Range parent1States = node.parents[0].states;
-            Range parent2States = node.parents[1].states;
-            CPTPrior = Variable.Array(Variable.Array<Dirichlet>(parent1States), parent2States).Named("Prob" + node.name + "Prior");
-            CPTPrior.ObservedValue = CPTPosterior;
-            CPT = Variable.Array(Variable.Array<Vector>(parent1States), parent2States).Named("Prob" + node.name);
-            CPT[parent2States][parent1States] = Variable<Vector>.Random(CPTPrior[parent2States][parent1States]); //Softmax with feature vector 
-            CPT.SetValueRange(node.states);
-        }
-        override public int ParentCount() {
-            return 2;
-        }
-        public override void AddParents() {
-            Observed = DistributionsNode.AddChildFromTwoParents(node.parents[0].distributions.Observed,
-                node.parents[1].distributions.Observed, CPT).Named(node.name);
-        }
-        public override void Infer(InferenceEngine engine) {
-            CPTPosterior = engine.Infer<Dirichlet[][]>(CPT);
-        }
-        public override void SetPriorToPosterior() {
-            CPTPrior.IsReadOnly = false;
-            CPTPrior.ObservedValue = CPTPosterior;
-        }
-        public override string PosteriorToString() {
-            string str = "";
-            for (int p1 = 0; p1 < node.parents[0].states.SizeAsInt; p1++) {
-                for (int p2 = 0; p2 < node.parents[1].states.SizeAsInt; p2++) {
-                    for (int ii = 0; ii < node.states.SizeAsInt-1; ii++) {
-                        str += node.name + " P(" + ii + "|" + p2 + "," + p1 + ") = " + CPTPosterior[p2][p1].GetMean()[ii] + "\n";
-                    }
-                }
-            }
-            return str;
-        }
-        public override void SetObservedData(Tuple<int[], double[]> observedValues) {
-            Observed.ObservedValue = observedValues.Item1;
-        }
-    }
-    [Serializable]
-    public class TwoCategoricalParentNodeNumerical : DistributionsNode {
-
-        [NonSerialized] public VariableArray<VariableArray<Gaussian>, Gaussian[][]> meanPrior;
-        [NonSerialized] public VariableArray<VariableArray<Gamma>, Gamma[][]> precisionPrior;
-        [NonSerialized] public VariableArray<VariableArray<double>, double[][]> mean;
-        [NonSerialized] public VariableArray<VariableArray<double>, double[][]> precision;
-        [NonSerialized] public VariableArray<VariableArray<double>, double[][]> val;
-        public Gaussian[][] meanPosterior;
-        public Gamma[][] precisionPosterior;
-        public Gaussian[][] valPosterior;
-        public TwoCategoricalParentNodeNumerical(ModelNode node) {
-            this.node = node;
-            Range parent1States = node.parents[0].states;
-            Range parent2States = node.parents[1].states;
-            meanPrior = Variable.Array(Variable.Array<Gaussian>(parent1States), parent2States).Named(node.name + "mean" + "Prior");
-            meanPrior.ObservedValue = Enumerable.Repeat(Enumerable.Repeat(Gaussian.FromMeanAndPrecision(0, 0.01), parent1States.SizeAsInt).ToArray(), parent2States.SizeAsInt).ToArray(); ;
-           
-            precisionPrior = Variable.Array(Variable.Array<Gamma>(parent1States), parent2States).Named(node.name + "mean" + "Prior");
-            precisionPrior.ObservedValue = Enumerable.Repeat(Enumerable.Repeat(Gamma.FromShapeAndScale(1, 1), parent1States.SizeAsInt).ToArray(), parent2States.SizeAsInt).ToArray(); ;
-          
-            mean = Variable.Array(Variable.Array<double>(parent1States), parent2States).Named(node.name + "prec");
-            mean[parent2States][parent1States] = Variable<double>.Random(meanPrior[parent2States][parent1States]);
-
-            precision = Variable.Array(Variable.Array<double>(parent1States), parent2States).Named(node.name + "prec");
-            precision[parent2States][parent1States] = Variable<double>.Random(precisionPrior[parent2States][parent1States]);
-
-            val = Variable.Array(Variable.Array<double>(parent1States), parent2States).Named(node.name + "val");
-            val[parent2States][parent1States] = Variable.GaussianFromMeanAndPrecision(mean[parent2States][parent1States], precision[parent2States][parent1States]);
-
-        }
-        public override void LoadAfterSerialization(Range N, Model sharedModel) {
-            base.LoadAfterSerialization(N, sharedModel);
-            Range parent1States = node.parents[0].states;
-            Range parent2States = node.parents[1].states;
-            meanPrior = Variable.Array(Variable.Array<Gaussian>(parent1States), parent2States).Named(node.name + "mean" + "Prior");
-            meanPrior.ObservedValue = meanPosterior;
-
-            precisionPrior = Variable.Array(Variable.Array<Gamma>(parent1States), parent2States).Named(node.name + "mean" + "Prior");
-            precisionPrior.ObservedValue = precisionPosterior;
-
-            mean = Variable.Array(Variable.Array<double>(parent1States), parent2States).Named(node.name + "prec");
-            mean[parent2States][parent1States] = Variable<double>.Random(meanPrior[parent2States][parent1States]);
-
-            precision = Variable.Array(Variable.Array<double>(parent1States), parent2States).Named(node.name + "prec");
-            precision[parent2States][parent1States] = Variable<double>.Random(precisionPrior[parent2States][parent1States]);
-
-            val = Variable.Array(Variable.Array<double>(parent1States), parent2States).Named(node.name + "val");
-            val[parent2States][parent1States] = Variable.GaussianFromMeanAndPrecision(mean[parent2States][parent1States], precision[parent2States][parent1States]);
-        }
-        override public int ParentCount() {
-            return 2;
-        }
-        public override void AddParents() {
-            ObservedNumerical = DistributionsNode.AddChildFromTwoParents(node.parents[0].distributions.Observed,
-                node.parents[1].distributions.Observed, val).Named(node.name);
-        }
-        public override void Infer(InferenceEngine engine) {
-            meanPosterior = engine.Infer<Gaussian[][]>(mean);
-            precisionPosterior = engine.Infer<Gamma[][]>(precision);
-        }
-        public override void SetPriorToPosterior() {
-            meanPrior.IsReadOnly = false;
-            meanPrior.ObservedValue = meanPosterior;
-            precisionPrior.IsReadOnly = false;
-            precisionPrior.ObservedValue = precisionPosterior;
-        }
-        public override string PosteriorToString() {
-            string str = "";
-            for (int p1 = 0; p1 < node.parents[0].states.SizeAsInt; p1++) {
-                for (int p2 = 0; p2 < node.parents[1].states.SizeAsInt; p2++) {
-                    for (int ii = 0; ii < node.states.SizeAsInt - 1; ii++) {
-                    //    str += node.name + " P(" + ii + "|" + p2 + "," + p1 + ") = " + CPTPosterior[p2][p1].GetMean()[ii] + "\n";
-                    }
-                }
-            }
-            return str;
-        }
-        public override void SetObservedData(Tuple<int[], double[]> observedValues) {
-            ObservedNumerical.ObservedValue = observedValues.Item2;
-        }
-    }
-    [Serializable]
-    public class ThreeCategoricalParentNodeCategorical : DistributionsNode {
-        [NonSerialized] public VariableArray2D<VariableArray<Vector>, Vector[,][]> CPT;
-        [NonSerialized] public VariableArray2D<VariableArray<Dirichlet>, Dirichlet[,][]> CPTPrior;
-        public Dirichlet[,][] CPTPosterior;
-        public ThreeCategoricalParentNodeCategorical(ModelNode node) {
-            this.node = node;
-            Range parent1States = node.parents[0].states;
-            Range parent2States = node.parents[1].states;
-            Range parent3States = node.parents[2].states;
-            CPTPrior = Variable.Array(Variable.Array<Dirichlet>(parent1States), parent2States, parent3States).Named("Prob" + node.name + "Prior");
-            Dirichlet[,][] priorObserved = new Dirichlet[parent2States.SizeAsInt, parent3States.SizeAsInt][];
-            for (int p2 = 0; p2 < parent2States.SizeAsInt; p2++) {
-                for (int p3 = 0; p3 < parent3States.SizeAsInt; p3++) {
-                    priorObserved[p2, p3] = Enumerable.Repeat(Dirichlet.Uniform(node.states.SizeAsInt), parent1States.SizeAsInt).ToArray();
-                }
-            }
-            CPTPrior.ObservedValue = priorObserved;
-            CPT = Variable.Array(Variable.Array<Vector>(parent1States), parent2States, parent3States).Named("Prob" + node.name);
-            CPT[parent2States, parent3States][parent1States] = Variable<Vector>.Random(CPTPrior[parent2States, parent3States][parent1States]);
-            CPT.SetValueRange(node.states);
-        }
-        public override void LoadAfterSerialization(Range N, Model sharedModel) {
-            base.LoadAfterSerialization(N, sharedModel);
-            Range parent1States = node.parents[0].states;
-            Range parent2States = node.parents[1].states;
-            Range parent3States = node.parents[2].states;
-            CPTPrior = Variable.Array(Variable.Array<Dirichlet>(parent1States), parent2States, parent3States).Named("Prob" + node.name + "Prior");
-            CPTPrior.ObservedValue = CPTPosterior;
-            CPT = Variable.Array(Variable.Array<Vector>(parent1States), parent2States, parent3States).Named("Prob" + node.name);
-            CPT[parent2States, parent3States][parent1States] = Variable<Vector>.Random(CPTPrior[parent2States, parent3States][parent1States]);
-            CPT.SetValueRange(node.states);
-        }
-        override public int ParentCount() {
-            return 3;
-        }
-        public override void AddParents() {
-            Observed = DistributionsNode.AddChildFromThreeParents(node.parents[0].distributions.Observed,
-                node.parents[1].distributions.Observed, node.parents[2].distributions.Observed, CPT).Named(node.name);
-        }
-        public override void Infer(InferenceEngine engine) {
-            CPTPosterior = engine.Infer<Dirichlet[,][]>(CPT);
-        }
-        public override void SetPriorToPosterior() {
-            CPTPrior.IsReadOnly = false;
-            CPTPrior.ObservedValue = CPTPosterior;
-        }
-        public override string PosteriorToString() {
-            string str = "";
-            for (int p1 = 0; p1 < node.parents[0].states.SizeAsInt; p1++) {
-                for (int p2 = 0; p2 < node.parents[1].states.SizeAsInt; p2++) {
-                    for (int p3 = 0; p3 < node.parents[2].states.SizeAsInt; p3++) {
-                        for (int ii = 0; ii < node.states.SizeAsInt-1; ii++) {
-                            str += node.name + " P(" + ii + "|" + p2 + "," + p3 + "," + p1 + ") = " + CPTPosterior[p2, p3][p1].GetMean()[ii] + "\n";
-                        }
-                    }
-                }
-            }
-            return str;
-        }
-        public override void SetObservedData(Tuple<int[], double[]> observedValues) {
-            Observed.ObservedValue = observedValues.Item1;
-        }
-    }
-     * */
-    /*
-    public class OneCategoricalParentNodeSoftmaxCategorical : DistributionsNode {
-        public VariableArray<VariableArray<Vector>, Vector[][]> B;
-        public VariableArray<VariableArray<double>> m;
-        VectorGaussian[][] bPost;
-        Gaussian[][] meanPost;
-        public VariableArray<Vector> CPT;
-        public VariableArray<Dirichlet> CPTPrior;
-        public Dirichlet[] CPTPosterior;
-        public OneCategoricalParentNodeSoftmaxCategorical(ModelNode node) {
-
-        }
-        override public int ParentCount() {
-            return 1;
-        }
-        public override void Infer(InferenceEngine engine) {
-            CPTPosterior = engine.Infer<Dirichlet[]>(CPT);
-        }
-        public override void SetPriorToPosterior() {
-            CPTPrior.ObservedValue = CPTPosterior;
-            CPTPrior.ObservedValue = CPTPosterior;
-        }
-
-        public override void AddParents() {
-            Observed = DistributionsNode.AddChildFromOneParent(node.parents[0].distributions.Observed, CPT).Named(node.name);
-        }
-        public override string PosteriorToString() {
-            string str = "";
-            for (int p1 = 0; p1 < node.parents[0].states.SizeAsInt; p1++) {
-                for (int ii = 0; ii < node.states.SizeAsInt - 1; ii++) {
-                    str += node.name + " P(" + ii + "|" + p1 + ") = " + CPTPosterior[p1].GetMean()[ii] + "\n";
-                }
-            }
-            return str;
-        }
-    }
-    public class TwoCategoricalParentNodeSoftmaxCategorical : DistributionsNode {
-        public VariableArray<VariableArray<Vector>, Vector[][]> CPT;
-        public VariableArray<VariableArray<Dirichlet>, Dirichlet[][]> CPTPrior;
-        public Dirichlet[][] CPTPosterior;
-        public TwoCategoricalParentNodeSoftmaxCategorical(ModelNode node) {
-            this.node = node;
-            Range parent1States = node.parents[0].states;
-            Range parent2States = node.parents[1].states;
-            CPTPrior = Variable.Array(Variable.Array<Dirichlet>(parent1States), parent2States).Named("Prob" + node.name + "Prior");
-            CPTPrior.ObservedValue = Enumerable.Repeat(Enumerable.Repeat(Dirichlet.Uniform(node.states.SizeAsInt), parent1States.SizeAsInt).ToArray(), parent2States.SizeAsInt).ToArray(); ;
-            CPT = Variable.Array(Variable.Array<Vector>(parent1States), parent2States).Named("Prob" + node.name);
-            CPT[parent2States][parent1States] = Variable<Vector>.Random(CPTPrior[parent2States][parent1States]); //Softmax with feature vector 
-            CPT.SetValueRange(node.states);
-        }
-        override public int ParentCount() {
-            return 2;
-        }
-        public override void AddParents() {
-            Observed = DistributionsNode.AddChildFromTwoParents(node.parents[0].distributions.Observed,
-                node.parents[1].distributions.Observed, CPT).Named(node.name);
-        }
-        public override void Infer(InferenceEngine engine) {
-            CPTPosterior = engine.Infer<Dirichlet[][]>(CPT);
-        }
-        public override string PosteriorToString() {
-            string str = "";
-            for (int p1 = 0; p1 < node.parents[0].states.SizeAsInt; p1++) {
-                for (int p2 = 0; p2 < node.parents[1].states.SizeAsInt; p2++) {
-                    for (int ii = 0; ii < node.states.SizeAsInt - 1; ii++) {
-                        str += node.name + " P(" + ii + "|" + p2 + "," + p1 + ") = " + CPTPosterior[p2][p1].GetMean()[ii] + "\n";
-                    }
-                }
-            }
-            return str;
-        }
-    }
-    public class ThreeCategoricalParentNodeSoftmaxCategorical : DistributionsNode {
-        public VariableArray2D<VariableArray<Vector>, Vector[,][]> CPT;
-        public VariableArray2D<VariableArray<Dirichlet>, Dirichlet[,][]> CPTPrior;
-        public Dirichlet[,][] CPTPosterior;
-        public ThreeCategoricalParentNodeSoftmaxCategorical(ModelNode node) {
-            this.node = node;
-            Range parent1States = node.parents[0].states;
-            Range parent2States = node.parents[1].states;
-            Range parent3States = node.parents[2].states;
-            CPTPrior = Variable.Array(Variable.Array<Dirichlet>(parent1States), parent2States, parent3States).Named("Prob" + node.name + "Prior");
-            Dirichlet[,][] priorObserved = new Dirichlet[parent2States.SizeAsInt, parent3States.SizeAsInt][];
-            for (int p2 = 0; p2 < parent2States.SizeAsInt; p2++) {
-                for (int p3 = 0; p3 < parent3States.SizeAsInt; p3++) {
-                    priorObserved[p2, p3] = Enumerable.Repeat(Dirichlet.Uniform(node.states.SizeAsInt), parent1States.SizeAsInt).ToArray();
-                }
-            }
-            CPTPrior.ObservedValue = priorObserved;
-            CPT = Variable.Array(Variable.Array<Vector>(parent1States), parent2States, parent3States).Named("Prob" + node.name);
-            CPT[parent2States, parent3States][parent1States] = Variable<Vector>.Random(CPTPrior[parent2States, parent3States][parent1States]);
-            CPT.SetValueRange(node.states);
-        }
-        override public int ParentCount() {
-            return 3;
-        }
-        public override void AddParents() {
-            Observed = DistributionsNode.AddChildFromThreeParents(node.parents[0].distributions.Observed,
-                node.parents[1].distributions.Observed, node.parents[2].distributions.Observed, CPT).Named(node.name);
-        }
-        public override void Infer(InferenceEngine engine) {
-            CPTPosterior = engine.Infer<Dirichlet[,][]>(CPT);
-        }
-        public override string PosteriorToString() {
-            string str = "";
-            for (int p1 = 0; p1 < node.parents[0].states.SizeAsInt; p1++) {
-                for (int p2 = 0; p2 < node.parents[1].states.SizeAsInt; p2++) {
-                    for (int p3 = 0; p3 < node.parents[2].states.SizeAsInt; p3++) {
-                        for (int ii = 0; ii < node.states.SizeAsInt - 1; ii++) {
-                            str += node.name + " P(" + ii + "|" + p2 + "," + p3 + "," + p1 + ") = " + CPTPosterior[p2, p3][p1].GetMean()[ii] + "\n";
-                        }
-                    }
-                }
-            }
-            return str;
-        }
-        public override void SetObservedData(Tuple<int[], double[]> observedValues) {
-            Observed.ObservedValue = observedValues.Item1;
-        }
-    }
-    
-    public class FourCategoricalParentNodeCategorical : DistributionsNode {
-        public VariableArray3D<VariableArray<Vector>, Vector[, ,][]> CPT;
-        public VariableArray3D<VariableArray<Dirichlet>, Dirichlet[, ,][]> CPTPrior;
-        public Dirichlet[, ,][] CPTPosterior;
-        public FourCategoricalParentNodeCategorical(ModelNode node) {
-            this.node = node;
-            Range parent1States = node.parents[0].states;
-            Range parent2States = node.parents[1].states;
-            Range parent3States = node.parents[2].states;
-            Range parent4States = node.parents[3].states;
-            CPTPrior = Variable.Array(Variable.Array<Dirichlet>(parent1States), parent2States, parent3States, parent4States).Named("Prob" + node.name + "Prior");
-            Dirichlet[, ,][] priorObserved = new Dirichlet[parent2States.SizeAsInt, parent3States.SizeAsInt, parent4States.SizeAsInt][];
-            for (int p2 = 0; p2 < parent2States.SizeAsInt; p2++) {
-                for (int p3 = 0; p3 < parent3States.SizeAsInt; p3++) {
-                    for (int p4 = 0; p4 < parent3States.SizeAsInt; p4++) {
-                        priorObserved[p2, p3, p4] = Enumerable.Repeat(Dirichlet.Uniform(node.states.SizeAsInt), parent1States.SizeAsInt).ToArray();
-                    }
-                }
-            }
-            CPTPrior.ObservedValue = priorObserved;
-
-            CPT = Variable.Array(Variable.Array<Vector>(parent1States), parent2States, parent3States, parent4States).Named("Prob" + node.name);
-            CPT[parent2States, parent3States, parent4States][parent1States] = Variable<Vector>.Random(CPTPrior[parent2States, parent3States, parent4States][parent1States]);
-            CPT.SetValueRange(node.states);
-        }
-        override public int ParentCount() {
-            return 4;
-        }
-        public override void AddParents() {
-            Observed = DistributionsNode.AddChildFromFourParents(node.parents[0].distributions.Observed,
-                node.parents[1].distributions.Observed, node.parents[2].distributions.Observed,
-                node.parents[3].distributions.Observed, CPT).Named(node.name);
-        }
-        public override void Infer(InferenceEngine engine) {
-            CPTPosterior = engine.Infer<Dirichlet[,,][]>(CPT);
-        }
-        public override void SetObservedData(Tuple<int[], double[]> observedValues) {
-            Observed.ObservedValue = observedValues.Item1;
-        }
-        public override string PosteriorToString() {
-            string str = "";
-            for (int p1 = 0; p1 < node.parents[0].states.SizeAsInt; p1++) {
-                for (int p2 = 0; p2 < node.parents[1].states.SizeAsInt; p2++) {
-                    for (int p3 = 0; p3 < node.parents[2].states.SizeAsInt; p3++) {
-                        for (int p4 = 0; p4 < node.parents[3].states.SizeAsInt; p4++) {
-                            for (int ii = 0; ii < node.states.SizeAsInt-1; ii++) {
-                                str += node.name + " P(" + ii + "|" + p2 + "," + p3 + "," + p4 + "," + p1 + ") = " + CPTPosterior[p2, p3, p4][p1].GetMean()[ii] + "\n";
-                            }
-                        }
-                    }
-                }
-            }
-            return str;
-        }
-    }
-     */
 }

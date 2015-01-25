@@ -179,6 +179,25 @@ namespace ZeldaInfer.LevelParse {
                 roomToVisit.depth = detourRoomPair.Item2.depth + roomToVisit.detour;
             }
         }
+        public void setPureDepth() {
+            List<Room> openSet = new List<Room>();
+            start.pureDepth = 0;
+            openSet.Add(start);
+            while (openSet.Count > 0) {
+                Room currentRoom = openSet[0];
+                openSet.RemoveAt(0);
+                foreach (var door in currentRoom.doors) {
+                    if (!((door.lock1.Contains('s')) ||
+                        door.OtherLock(currentRoom).Contains("O"))) {
+                        Room otherRoom = door.OtherRoom(currentRoom);
+                        if (otherRoom.pureDepth == -1) {
+                            otherRoom.pureDepth = currentRoom.pureDepth + 1;
+                            openSet.Add(otherRoom);
+                        }
+                    }
+                }
+            }
+        }
         public Tuple<int, Room> FloodFill(Room currentRoom, List<Room> goals) {
             
 		    List<Room> visited = new List<Room>();
@@ -270,13 +289,17 @@ namespace ZeldaInfer.LevelParse {
             };
             Dictionary<string, List<string>> roomStatistics = new Dictionary<string, List<string>>(){
                 {"doorTypesFrom", new List<string>()},
+                {"doorCameFrom", new List<string>()},
                 {"doorTypesTo", new List<string>()},
+                {"doorGoTo", new List<string>()},
                 {"crossings", new List<string>()},
                 {"depth", new List<string>()},
+                {"pureDepth", new List<string>()},
                 {"distanceOfRoomToOptimalPath", new List<string>()},
-                {"neighborTypes", new List<string>()},
                 {"numberOfNeighbors", new List<string>()},
                 {"roomType", new List<string>()},
+                {"roomCameFrom", new List<string>()},
+                {"roomGoTo", new List<string>()},
                 {"enemyNeighbors", new List<string>()},
                 {"puzzleNeighbors", new List<string>()},
                 {"itemNeighbors", new List<string>()},
@@ -290,7 +313,6 @@ namespace ZeldaInfer.LevelParse {
                 {"bigKeyLockedToNeighbors", new List<string>()},
                 {"oneWayLockedToNeighbors", new List<string>()},
                 {"lookAheadToNeighbors", new List<string>()},
-
                 {"passableFromNeighbors", new List<string>()},
                 {"lockedFromNeighbors", new List<string>()},
                 {"bombLockedFromNeighbors", new List<string>()},
@@ -380,16 +402,37 @@ namespace ZeldaInfer.LevelParse {
                 foreach (var statPair in doorStats) {
                     roomStatistics[statPair.Key].Add(""+statPair.Value);
                 }
+                string doorCameFrom = "_";
+                string roomCameFrom = "_";
+                string doorGoTo = "_";
+                string roomGoTo = "_";
+                foreach (var door in room.doors) {
+                    var doorLock = door.OtherLock(room);
+                    if (door.OtherLock(room) != "O" && door.OtherLock(room) != "1") {
+                        if (door.OtherRoom(room).depth < room.depth) {
+                            doorCameFrom = doorLock == "" ? "_" : doorLock;
+                            roomCameFrom = door.OtherRoom(room).type == "" ? "_" : door.OtherRoom(room).type;
+                        }
+                        if (door.OtherRoom(room).depth > room.depth) {
+                            doorGoTo = doorLock == "" ? "_" : doorLock;
+                            roomGoTo = door.OtherRoom(room).type == "" ? "_" : door.OtherRoom(room).type;
+                        }
+                    }
+                }
+                roomStatistics["doorCameFrom"].Add(cleanString(doorCameFrom));
+                roomStatistics["roomCameFrom"].Add(cleanString(roomCameFrom));
+                roomStatistics["doorGoTo"].Add(cleanString(doorGoTo));
+                roomStatistics["roomGoTo"].Add(cleanString(roomGoTo));
 
                 Array.Sort(neighborTypes);
                 Array.Sort(doorToTypes);
                 Array.Sort(doorFromTypes);
                 roomStatistics["doorTypesTo"].Add(String.Join(",", doorToTypes));
                 roomStatistics["doorTypesFrom"].Add(String.Join(",", doorFromTypes));
-                roomStatistics["neighborTypes"].Add(String.Join(",",neighborTypes));
               //  roomStatistics["neighborTypes"].Add(cleanString(type));
                 roomStatistics["distanceOfRoomToOptimalPath"].Add("" + room.detour);
                 roomStatistics["depth"].Add("" + room.depth);
+                roomStatistics["pureDepth"].Add("" + room.pureDepth);
                 roomStatistics["crossings"].Add("" + room.crossingCount);
                 /*
                 type = "";

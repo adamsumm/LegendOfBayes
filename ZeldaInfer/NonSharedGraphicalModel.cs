@@ -9,7 +9,10 @@ using MicrosoftResearch.Infer.Models;
 using MicrosoftResearch.Infer;
 using MicrosoftResearch.Infer.Distributions;
 using MicrosoftResearch.Infer.Maths;
-
+using MicrosoftResearch.Infer.Factors;
+using MicrosoftResearch.Infer.Graphs;
+using MicrosoftResearch.Infer.Utils;
+using MicrosoftResearch.Infer.Views;
 
 namespace ZeldaInfer {
     [Serializable]
@@ -24,6 +27,8 @@ namespace ZeldaInfer {
         public Model sharedModel;
         [NonSerialized]
         public InferenceEngine Engine = new InferenceEngine(new VariationalMessagePassing());
+        [NonSerialized]
+        public Range N;
         public NonSharedGraphicalModel() { }
         public NonSharedGraphicalModel(GraphicalModel original) {
             foreach (var node in original.nodes) {
@@ -38,7 +43,9 @@ namespace ZeldaInfer {
                     AddLink(nodes[parent.name], nodes[node.Key]);
                 }
             }
-
+            NumberOfExamples = Variable.New<int>().Named("NofE");
+            N = new Range(NumberOfExamples).Named("N");
+          //  CreateNetwork();
         }
         public void AddNode(ModelNodeNonShared node) {
             nodes[node.name] = node;
@@ -50,15 +57,13 @@ namespace ZeldaInfer {
             }
             ModelNodeNonShared.AddLink(parent, child);
         }
-        public void CreateNetwork() {
+        public void CreateNetwork(int numberOfEntries) {
             List<ModelNodeNonShared> completed = new List<ModelNodeNonShared>();
-            NumberOfExamples = Variable.New<int>().Named("NofE");
-            Range N = new Range(NumberOfExamples).Named("N");
             foreach (ModelNodeNonShared node in nodes.Values) {
                 DistributionsNodeNonShared.CreateDistributionsNode(node, N);
             }
             foreach (ModelNodeNonShared node in independentNodes.Values) {
-                node.distributions.AddParents();
+                node.distributions.AddParents(numberOfEntries);
                 completed.Add(node);
             }
             while (completed.Count != nodes.Count) {
@@ -72,7 +77,7 @@ namespace ZeldaInfer {
                             }
                         }
                         if (allParentsDone) {
-                            node.distributions.AddParents();
+                            node.distributions.AddParents(numberOfEntries);
                             completed.Add(node);
                         }
                     }
@@ -90,7 +95,7 @@ namespace ZeldaInfer {
             for (int ii = 0; ii < chunks; ii++) {
                 int diff = nextSpot - currentSpot;
                 outArray[ii] = new T[nextSpot - currentSpot];
-                Array.Copy(array, currentSpot, outArray[ii], 0, nextSpot - currentSpot);//array.TakeWhile((___, index) => ((index >= currentSpot) && (index < nextSpot))).ToArray();
+                Array.Copy(array, currentSpot, outArray[ii], 0, nextSpot - currentSpot);
                 currentSpot = nextSpot;
                 nextSpot = Math.Min(array.Length, currentSpot + numElements);
             }
@@ -98,30 +103,29 @@ namespace ZeldaInfer {
             return outArray;
         }
         public void LearnParameters(Dictionary<string, Tuple<int[], double[]>> observedData) {
-            int numberOfEntries = 0;
+            int numberOfEntries = 1;
             HashSet<string> alreadyObserved = new HashSet<string>();
             List<KeyValuePair<string, ModelNodeNonShared>> toBeAdded = new List<KeyValuePair<string, ModelNodeNonShared>>();
             foreach (KeyValuePair<string, ModelNodeNonShared> kvPair in nodes) {
                 if (observedData.ContainsKey(kvPair.Key)) {
                     if (kvPair.Value.distributionType == DistributionType.Categorical) {
-                        // kvPair.Value.distributions.Observed.ObservedValue = observedData[kvPair.Key].Item1;
                         numberOfEntries = observedData[kvPair.Key].Item1.Length;
+                        break;
                     }
                     else if (kvPair.Value.distributionType == DistributionType.Numerical) {
-                        //  kvPair.Value.distributions.ObservedNumerical.ObservedValue = observedData[kvPair.Key].Item2;
                         numberOfEntries = observedData[kvPair.Key].Item2.Length;
+                        break;
                     }
                 }
             }
             NumberOfExamples.ObservedValue = numberOfEntries;
+            CreateNetwork(numberOfEntries);
             foreach (KeyValuePair<string, ModelNodeNonShared> kvPair in nodes) {
                 if (observedData.ContainsKey(kvPair.Key)) {
                     if (kvPair.Value.distributionType == DistributionType.Categorical) {
-                        // kvPair.Value.distributions.Observed.ObservedValue = observedData[kvPair.Key].Item1;
                         numberOfEntries = observedData[kvPair.Key].Item1.Length;
                     }
                     else if (kvPair.Value.distributionType == DistributionType.Numerical) {
-                        //  kvPair.Value.distributions.ObservedNumerical.ObservedValue = observedData[kvPair.Key].Item2;
                         numberOfEntries = observedData[kvPair.Key].Item2.Length;
                     }
                     bool quit = false;
@@ -146,6 +150,10 @@ namespace ZeldaInfer {
                 }
             }
             int ii = 0;
+            HashSet<string> toBeAddedKeys = new HashSet<string>();
+            foreach (var tb in toBeAdded){
+                toBeAddedKeys.Add(tb.Key);
+            }
             while (toBeAdded.Count > 0) {
                 if (alreadyObserved.Contains(toBeAdded[ii].Key)){
                     toBeAdded.RemoveAt(ii);
@@ -154,7 +162,7 @@ namespace ZeldaInfer {
                 bool quit = false;
                 foreach (var parent in toBeAdded[ii].Value.parents) {
                     if (parent.distributions.GetType() == typeof(LinearRegressionNonShared)) {
-                        if (!alreadyObserved.Contains(parent.name)) {
+                        if (!alreadyObserved.Contains(parent.name) && toBeAddedKeys.Contains(parent.name)) {
                             ii++;
                             quit = true;
                             ii = ii % toBeAdded.Count;
@@ -174,12 +182,6 @@ namespace ZeldaInfer {
                 }
                 ii = ii % toBeAdded.Count;
             }
-            foreach (ModelNodeNonShared node in nodes.Values) {
-      //          node.distributions.Infer(Engine);
-            }
-            foreach (ModelNodeNonShared node in nodes.Values) {
-      //          Console.WriteLine(node.distributions.PosteriorToString());
-            }
         }
         public static Dictionary<string, Tuple<int[], double[]>> LoadData(string filename) {
             Dictionary<string, Tuple<int[], double[]>> data = new Dictionary<string, Tuple<int[], double[]>>();
@@ -198,64 +200,53 @@ namespace ZeldaInfer {
             }
             return data;
         }
-        public void LoadAfterSerialization(string filename, int batches) {
-            XDocument xdoc = XDocument.Load(filename);
-            List<Tuple<string, string>> edges = new List<Tuple<string, string>>();
-            List<Tuple<string, string, string>> nodeParams = new List<Tuple<string, string, string>>();
-            sharedModel = new Model(batches);
-            Engine = new InferenceEngine(new VariationalMessagePassing());
-            //     Engine.Compiler.UseParallelForLoops = true;
-            rangeCategories = new Dictionary<string, Tuple<string[], Range>>();
-            foreach (var element in xdoc.Descendants()) {
-                switch (element.Name.ToString()) {
-                    case "Category":
-                        string[] categeories = element.Attribute("categories").Value.Split(new char[1] { ',' });
-                        string name = element.Attribute("name").Value;
-                        rangeCategories[name] = new Tuple<string[], Range>(categeories, new Range(categeories.Length).Named(name));
-                        break;
-                    case "Edge":
-                        edges.Add(new Tuple<string, string>(element.Attribute("parent").Value, element.Attribute("child").Value));
-                        break;
-                    case "Node":
-                        nodeParams.Add(new Tuple<string, string, string>(element.Attribute("name").Value, element.Attribute("category").Value, element.Attribute("domain").Value));
-                        break;
+
+        public Dictionary<string, Tuple<DistributionType,Object>> Infer(Dictionary<string, Tuple<int[], double[]>> data, List<string> inferred) {
+            int dataCount = 0;
+            Dictionary<string, Tuple<DistributionType, Object>> inferredDistributions = new Dictionary<string, Tuple<DistributionType, Object>>();
+            Dictionary<string, Tuple<int[], double[]>> dataCopy = new Dictionary<string, Tuple<int[], double[]>>(data);
+            foreach (var kv in data) {
+                if (kv.Value.Item1 != null) {
+                    dataCount = kv.Value.Item1.Length;
+                    break;
+                }
+                else {
+                    dataCount = kv.Value.Item2.Length;
+                    break;
                 }
             }
 
-            NumberOfExamples = Variable.New<int>().Named("NofE");
-            Range N = new Range(NumberOfExamples).Named("N");
+            for (int ii = 0; ii < 1; ii++) {
+                foreach (var varName in inferred) {
+                    dataCopy.Remove(varName);
+                }
+                Dictionary<string, Tuple<int[], double[]>> singlePoint = new Dictionary<string, Tuple<int[], double[]>>();
+                foreach (var kv in data) {
+                    Tuple<int[], double[]> tup = null;
+                    if (kv.Value.Item1 != null) {
+                        tup = new Tuple<int[], double[]>(new int[] { kv.Value.Item1[ii] }, null);
+                    }
+                    else {
+                        tup = new Tuple<int[], double[]>(null, new double[] { kv.Value.Item2[ii] });
+                    }
+                    singlePoint[kv.Key] = tup;
+                } 
+                Engine.Compiler.GivePriorityTo(typeof(GaussianProductOp_SHG09));
+                LearnParameters(dataCopy);
+                foreach (var inferredVar in inferred) {
+                    ModelNodeNonShared node = nodes[inferredVar];
+                    if (node.distributionType == DistributionType.Categorical) {
+                        var output = Engine.Infer<Discrete[]>((nodes[inferredVar].distributions).Observed);
 
-            foreach (var node in nodeParams) {
-                nodes[node.Item1].distributionType = (DistributionType)Enum.Parse(typeof(DistributionType), node.Item3);
-                nodes[node.Item1].states = rangeCategories[node.Item2].Item2;
-            }
-
-            foreach (var node in nodeParams) {
-             //   nodes[node.Item1].distributions.LoadAfterSerialization(N, sharedModel);
-            }
-            List<ModelNodeNonShared> completed = new List<ModelNodeNonShared>();
-            foreach (ModelNodeNonShared node in independentNodes.Values) {
-                node.distributions.AddParents();
-                completed.Add(node);
-            }
-            while (completed.Count != nodes.Count) {
-                foreach (ModelNodeNonShared node in nodes.Values) {
-                    if (!completed.Contains(node)) {
-                        bool allParentsDone = true;
-                        foreach (ModelNodeNonShared parent in node.parents) {
-                            if (!completed.Contains(parent)) {
-                                allParentsDone = false;
-                                break;
-                            }
-                        }
-                        if (allParentsDone) {
-                            node.distributions.AddParents();
-                            completed.Add(node);
-                        }
+                        inferredDistributions[inferredVar] = new Tuple<DistributionType, Object>(DistributionType.Categorical,Engine.Infer<Discrete[]>((nodes[inferredVar].distributions).Observed)[0]);
+                    }
+                    else {
+                        inferredDistributions[inferredVar] = new Tuple<DistributionType, Object>(DistributionType.Numerical, Engine.Infer<Gaussian[]>((nodes[inferredVar].distributions).ObservedNumerical)[0]);
+               
                     }
                 }
             }
-
+            return inferredDistributions;
         }
     }
 }

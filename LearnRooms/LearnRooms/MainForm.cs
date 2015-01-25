@@ -24,6 +24,16 @@ using AForge.Imaging;
 using LearnRooms.Ogmo;
 using System.Drawing.Drawing2D;
 using SimpleLottery;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Xml.Linq;
+using System.Text.RegularExpressions;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.IO;
 namespace LearnRooms {
     public partial class MainForm : Form {
         string levelName;
@@ -42,6 +52,19 @@ namespace LearnRooms {
         Dictionary<string, double[,]> componentVec;
         public MainForm() {
             InitializeComponent();
+        }
+        public static string toString(double[,] array) {
+            string str = "";
+            for (int ii = 0; ii < array.GetLength(0); ii++) {
+                for (int jj = 0; jj < array.GetLength(1); jj++) {
+                    str += array[ii, jj] + ",";
+                }
+                str = str.Substring(0, str.Length - 1);
+                str += ";";
+
+            }
+            str = str.Substring(0, str.Length - 1);
+            return str;
         }
         private void MainForm_Load(object sender, EventArgs e) {
             List<Room> rooms = new List<Room>();
@@ -84,9 +107,9 @@ namespace LearnRooms {
             int ii = 0;
             List<Room> flipped = new List<Room>();
             foreach (var room in rooms) {
-                room.toBitmap().Save("room" + ii + ".png");
+               // room.toBitmap().Save("room" + ii + ".png");
                 room.changeSize(12, 10);
-                room.toBitmap().Save("room" + ii + "A.png");
+              //  room.toBitmap().Save("room" + ii + "A.png");
                 Room temp = room.FlipUpDown();
                 flipped.Add(temp);
                 flipped.Add(room.FlipLeftRight());
@@ -104,7 +127,33 @@ namespace LearnRooms {
             }
             roomTypes.Sort();
             listBox1.DataSource = roomTypes;
-
+            XDocument componentDoc = new XDocument(new XElement("root"));
+            foreach (var component in componentVec){
+                componentDoc.Root.Add(new XElement(component.Key, new XAttribute("dim1", component.Value.GetLength(0)), new XAttribute("dim2", component.Value.GetLength(1)),toString(component.Value)));
+            }
+            componentDoc.Save("components.xml");
+            XDocument clusterDoc = new XDocument(new XElement("root"));
+            foreach (var cluster in roomClusters) {
+                foreach (var bunch in cluster.Value){
+                    var clusterBunch = new XElement("Cluster",new XAttribute("name",cluster.Key),new XAttribute("id",bunch.Key));
+                    foreach (var room in bunch.Value){
+                        clusterBunch.Add(room.toXML());
+                    }
+                    clusterDoc.Root.Add(clusterBunch);
+                }
+            }
+            clusterDoc.Save("clusters.xml");
+            XDocument noclusterDoc = new XDocument(new XElement("root"));
+            foreach (var cluster in roomClusters) {
+                var clusterBunch = new XElement("Cluster", new XAttribute("name", cluster.Key), new XAttribute("id", 0));
+                foreach (var bunch in cluster.Value) {
+                    foreach (var room in bunch.Value) {
+                        clusterBunch.Add(room.toXML());
+                    }
+                }
+                noclusterDoc.Root.Add(clusterBunch);
+            }
+            noclusterDoc.Save("noclusters.xml");
         }
         public static List<Room> readRooms(string levelFile, string projectFile, 
                 int roomToRoomWidth, int roomToRoomHeight, int roomWidth, int roomHeight) {

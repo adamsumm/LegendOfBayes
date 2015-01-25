@@ -104,9 +104,9 @@ namespace LearnRooms {
                 reconstructed.toBitmap().Save("room" + counter + "Reconstructed.png");
                 counter++;
             }
-            int numberofClusters = 30;
+            int numberofClusters = 25;
             KMeans kmeans = new KMeans(numberofClusters);
-            kmeans.Tolerance = 0.25;
+            kmeans.Tolerance = 0.5;
             int[] clusters = kmeans.Compute(clusterData);
             Dictionary<string, SortedSet<int>> clusteredRooms = new Dictionary<string, SortedSet<int>>();
             Dictionary<int, SortedSet<string>> roomClusters = new Dictionary<int, SortedSet<string>>();

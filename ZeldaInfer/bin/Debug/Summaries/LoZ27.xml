@@ -34,13 +34,17 @@
   <distanceToDungeonKey>-1</distanceToDungeonKey>
   <distanceToSpecialItem>6</distanceToSpecialItem>
   <doorTypesFrom>_;_,_,_;_,l;_,_;_,l;_,_,l;l,l,O;_,_;_,_;_,l;_,l;_,l;_,l;k,l;k,l;l,l;_;_,l;_;l,O,O;_,l;_,_,O;k;_,l;_,l;_,l,l;l;_,k,l,O;_,_,_;_,O,O;_,_,_</doorTypesFrom>
+  <doorCameFrom>_;;;;l;;l;;;;l;;;l;k;l;;l;;l;l;;k;l;;l;l;l;;;</doorCameFrom>
   <doorTypesTo>_;_,_,_;_,l;_,_;_,l;_,_,l;l,l,O;_,_;_,_;_,l;_,l;_,l;_,l;k,l;k,l;l,l;_;_,l;_;l,O,O;_,l;_,_,O;k;_,l;_,l;_,l,l;l;_,k,l,O;_,_,_;_,O,O;_,_,_</doorTypesTo>
+  <doorGoTo>;;l;;;l;O;;;l;;l;l;k;l;l;_;;_;O;_;;_;;l;;_;O;;O;</doorGoTo>
   <crossings>1;1;0;1;1;2;1;1;1;1;1;1;1;1;1;1;1;2;1;0;0;1;0;1;1;1;0;0;1;0;0</crossings>
   <depth>0;1;2;2;3;4;9;10;11;12;13;14;15;21;22;23;24;5;6;3;20;17;11;16;20;19;20;10;18;11;19</depth>
+  <pureDepth>0;1;2;2;3;4;5;6;7;8;9;10;11;17;18;19;20;5;6;3;16;13;16;12;16;15;16;15;14;14;15</pureDepth>
   <distanceOfRoomToOptimalPath>0;0;1;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;2;2;0;2;0;0;0;1;1;0;2;1</distanceOfRoomToOptimalPath>
-  <neighborTypes>_;e,eip,s;_,ep;_,ep;e,ep;ep,ep,mp;ep,ep,ep;eip,mp;eip,ep;eip,ep;eip,mp;ekp,ep;ep,mp;eip,ep;b,e;eip,t;b;ep,Iekp;ep;eip,ep,p;ep,p;ep,p,p;ep;ekp,p;e,p;ep,m,p;p;eip,ep,mp,p;p,p,p;ep,p,p;p,p,p</neighborTypes>
   <numberOfNeighbors>1;3;2;2;2;3;3;2;2;2;2;2;2;2;2;2;1;2;1;3;2;3;1;2;2;3;1;4;3;3;3</numberOfNeighbors>
   <roomType>s;_;eip;e;ep;ep;mp;ep;eip;eip;ep;mp;ekp;e;eip;b;t;ep;Iekp;ep;p;p;eip;ep;ep;p;m;ep;p;p;p</roomType>
+  <roomCameFrom>_;s;_;_;e;ep;ep;mp;ep;eip;eip;ep;mp;ep;e;eip;b;ep;ep;eip;p;p;ep;ekp;p;p;p;mp;p;ep;p</roomCameFrom>
+  <roomGoTo>_;e;ep;ep;ep;ep;ep;eip;eip;ep;mp;ekp;ep;eip;b;t;_;Iekp;_;p;_;p;_;p;e;m;_;p;p;p;p</roomGoTo>
   <enemyNeighbors>0;2;1;1;2;3;3;2;2;2;2;2;2;2;2;1;1;2;1;2;1;1;1;1;1;2;0;3;0;1;0</enemyNeighbors>
   <puzzleNeighbors>0;1;1;1;1;3;3;2;2;2;2;2;2;2;0;1;0;2;1;3;2;3;1;2;1;2;1;4;3;3;3</puzzleNeighbors>
   <itemNeighbors>0;1;0;0;0;0;0;1;1;1;1;1;0;1;0;1;0;1;0;1;0;0;0;1;0;0;0;1;0;0;0</itemNeighbors>

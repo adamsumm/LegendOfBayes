@@ -6,14 +6,39 @@ using System.Xml.Linq;
 using System.Threading.Tasks;
 using System.Drawing;
 using Priority_Queue;
-using SimpleLottery;
+
+
 namespace LearnRooms {
+    public class SearchNode : Priority_Queue.PriorityQueueNode {
+        public int xx;
+        public int yy;
+        public int depth = -1;
+        public SearchNode(int x, int y, int depth = -1) {
+            xx = x;
+            yy = y;
+            this.depth = depth;
+        }
+        public int dist(SearchNode other) {
+            return Math.Abs(xx - other.xx) + Math.Abs(yy - other.yy);
+        }
+        public bool Equals(SearchNode p) {
+            return p.xx == xx && p.yy == yy;
+        }
+
+        public override int GetHashCode() {
+            unchecked // Overflow is fine, just wrap
+            {
+                return ((xx * 486187739) + yy) * 486187739;
+            }
+        }
+    }
     public class Room {
         public Dictionary<string, double[,]> objects = new Dictionary<string, double[,]>();
         public SearchNode[,] nodes;
         public string roomType;
         public int width;
         public int height;
+        public int connections;
         public Dictionary<string, double[]> coefficients = new Dictionary<string, double[]>();
         public Room(int width, int height) {
             this.width = width;
@@ -54,22 +79,23 @@ namespace LearnRooms {
             for (int ii = 0; ii < width; ii++) {
                 for (int jj = 0; jj < height; jj++) {
                     foreach (var obj in objects) {
-                        other.objects[obj.Key][width-ii-1,jj] = obj.Value[ii, jj];
+                        other.objects[obj.Key][width - ii - 1, jj] = obj.Value[ii, jj];
                     }
                 }
             }
             return other;
         }
-        public Room reconstruct(Dictionary<string, double[,]> components,double randomness) {
+        public Room reconstruct(Dictionary<string, double[,]> components, double randomness) {
 
             int width = objects["blocks"].GetLength(0);
             int height = objects["blocks"].GetLength(1);
             Room other = new Room(width, height);
+            other.coefficients = coefficients;
             int counter = 0;
             for (int ii = 0; ii < width; ii++) {
                 for (int jj = 0; jj < height; jj++) {
                     foreach (var obj in objects) {
-                        for (int kk = 0; kk < coefficients[obj.Key].Length; kk++) { 
+                        for (int kk = 0; kk < coefficients[obj.Key].Length; kk++) {
                             other.objects[obj.Key][ii, jj] += components[obj.Key][counter, kk] * coefficients[obj.Key][kk];
                         }
                     }
@@ -85,7 +111,8 @@ namespace LearnRooms {
             }
         }
         public XElement toXML() {
-            bool[][] reachability = GetReachability();
+            Random rand = new Random();
+            bool[][] reachability = GetReachability(rand);
             string rstring = "";
             int bitmask = 0;
             int ii = 0;
@@ -112,22 +139,22 @@ namespace LearnRooms {
             roomType = "";
             for (int ii = 0; ii < width; ii++) {
                 for (int jj = 0; jj < height; jj++) {
-                    if (0.9 <objects["enemies"][ii, jj]) {
+                    if (0.9 < objects["enemies"][ii, jj]) {
                         types.Add("e");
                     }
-                    if (0.9 <objects["keys"][ii, jj]) {
+                    if (0.9 < objects["keys"][ii, jj]) {
                         types.Add("k");
                     }
-                    if (0.9 <objects["keyItems"][ii, jj]) {
+                    if (0.9 < objects["keyItems"][ii, jj]) {
                         types.Add("I");
                     }
-                    if (0.9 <objects["items"][ii, jj]) {
+                    if (0.9 < objects["items"][ii, jj]) {
                         types.Add("i");
                     }
-                    if (0.9 <objects["puzzles"][ii, jj]) {
+                    if (0.9 < objects["puzzles"][ii, jj]) {
                         types.Add("p");
                     }
-                    if (0.9 <objects["traps"][ii, jj]) {
+                    if (0.9 < objects["traps"][ii, jj]) {
                         types.Add("p");
                     }
                     if (0 < objects["water"][ii, jj]) {
@@ -144,9 +171,9 @@ namespace LearnRooms {
             if (roomType == "") {
                 roomType = "_";
             }
-            
+
         }
-        public List<SearchNode> GetNeighbors(SearchNode node) {
+        public List<SearchNode> GetNeighbors(SearchNode node,Random rng) {
             List<SearchNode> neighbors = new List<SearchNode>();
             if (node.xx > 0) {
                 neighbors.Add(nodes[node.xx - 1, node.yy]);
@@ -154,13 +181,13 @@ namespace LearnRooms {
             if (node.yy > 0) {
                 neighbors.Add(nodes[node.xx, node.yy - 1]);
             }
-            if (node.xx+1 < objects["blocks"].GetLength(0) ) {
+            if (node.xx + 1 < objects["blocks"].GetLength(0)) {
                 neighbors.Add(nodes[node.xx + 1, node.yy]);
             }
             if (node.yy + 1 < objects["blocks"].GetLength(1)) {
                 neighbors.Add(nodes[node.xx, node.yy + 1]);
             }
-            neighbors.Shuffle();
+            neighbors.Shuffle(rng);
             return neighbors;
         }
         static double AngleBetween(double[] vec1, double[] vec2) {
@@ -175,8 +202,7 @@ namespace LearnRooms {
             return Math.Acos(v12 / (Math.Sqrt(v1) * Math.Sqrt(v2))); ;
         }
         public static Room Interpolate(Room room1, Room room2, float t) {
-            Room output = new Room(room1.width,room1.height);
-            Console.WriteLine(t);
+            Room output = new Room(room1.width, room1.height);
             foreach (var layer in room1.coefficients.Keys) {
                 double[] coeff1 = room1.coefficients[layer];
                 double[] coeff2 = room2.coefficients[layer];
@@ -187,14 +213,14 @@ namespace LearnRooms {
                 double[] interp = new double[coeff1.Length];
                 double s = Math.Sin(angleBetween);
                 for (int ii = 0; ii < interp.Length; ii++) {
-                  //  interp[ii] = coeff1[ii] * (1 - t) + coeff2[ii] * t;
-                    interp[ii] = coeff1[ii] * Math.Sin((1 - t) * angleBetween) / s + coeff2[ii] * Math.Sin(t * angleBetween) / s;
+                      interp[ii] = coeff1[ii] * (1 - t) + coeff2[ii] * t;
+                   // interp[ii] = coeff1[ii] * Math.Sin((1 - t) * angleBetween) / s + coeff2[ii] * Math.Sin(t * angleBetween) / s;
                 }
                 output.coefficients[layer] = interp;
             }
             return output;
         }
-        public bool[][] GetReachability() {
+        public bool[][] GetReachability(Random rand) {
             nodes = new SearchNode[width, height];
             for (int ii = 0; ii < width; ii++) {
                 for (int jj = 0; jj < height; jj++) {
@@ -202,15 +228,20 @@ namespace LearnRooms {
                 }
             }
             bool[] doors = new bool[4];
-            doors[0] = objects["blocks"][0, 5] < 0.5f && objects["blocks"][0, 6] < 0.5f;
-            doors[1] = objects["blocks"][width - 1, 5] < 0.5f && objects["blocks"][width - 1, 6] < 0.5f;
-            doors[2] = objects["blocks"][4, height - 1] < 0.5f && objects["blocks"][5, height - 1] < 0.5f;
-            doors[3] = objects["blocks"][4, 0] < 0.5f && objects["blocks"][5, 0] < 0.5f;
+            for (int ii = 0; ii < 4; ii++) {
+                doors[ii] = true;
+            }
+            foreach (var type in objects.Values) {
+                doors[0] = doors[0] && type[0, 5] < 0.5f && type[0, 6] < 0.5f;
+                doors[1] = doors[1] && type[width - 1, 5] < 0.5f && type[width - 1, 6] < 0.5f;
+                doors[2] = doors[2] && type[4, height - 1] < 0.5f && type[5, height - 1] < 0.5f;
+                doors[3] = doors[3] && type[4, 0] < 0.5f && type[5, 0] < 0.5f;
+            }
             int[][] doorLocs = new int[4][];
-            doorLocs[0] = new int[]{ 0,5};
-            doorLocs[1] = new int[]{ width - 1, 5};
-            doorLocs[2] = new int[]{4, height - 1};
-            doorLocs[3] = new int[]{ 4, 0};
+            doorLocs[0] = new int[] { 0, 5 };
+            doorLocs[1] = new int[] { width - 1, 5 };
+            doorLocs[2] = new int[] { 4, height - 1 };
+            doorLocs[3] = new int[] { 4, 0 };
             bool[][] reachabilityTable = new bool[4][];
             for (int ii = 0; ii < 4; ii++) {
                 reachabilityTable[ii] = new bool[4];
@@ -220,7 +251,7 @@ namespace LearnRooms {
                     reachabilityTable[ii][jj] = doors[ii] && doors[jj];
                     reachabilityTable[jj][ii] = doors[ii] && doors[jj];
                     if (reachabilityTable[ii][jj]) {
-                        List<SearchNode> path = getPath(nodes[doorLocs[ii][0], doorLocs[ii][1]], nodes[doorLocs[jj][0], doorLocs[jj][1]], getBlocked);
+                        List<SearchNode> path = getPath(nodes[doorLocs[ii][0], doorLocs[ii][1]], nodes[doorLocs[jj][0], doorLocs[jj][1]], getBlocked,rand);
                         foreach (var node in path) {
                             if (objects["blocks"][node.xx, node.yy] > 0.5f) {
                                 reachabilityTable[ii][jj] = false;
@@ -231,9 +262,29 @@ namespace LearnRooms {
                     }
                 }
             }
+            int bitcount = 0;
+            int bitmask = 0;
+            foreach (var row in reachabilityTable) {
+                foreach (var d in row) {
+                    if (d) {
+                        bitmask += (int)Math.Pow(2, bitcount);
+                    }
+                    bitcount++;
+                }
+            }
+            connections = bitmask;
             return reachabilityTable;
         }
-
+        public bool containsObject(string objectType) {
+            for (int ii = 0; ii < width; ii++) {
+                for (int jj = 0; jj < height; jj++) {
+                    if (objects[objectType][ii, jj] > 0.5f) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
         public delegate float scoringFunction(SearchNode a, SearchNode b);
         public float getScore(SearchNode a, SearchNode b) {
             /*
@@ -250,14 +301,14 @@ namespace LearnRooms {
                 );
              * */
             return 1 + (float)(1.5 * Math.Abs(objects["blocks"][a.xx, a.yy] - objects["blocks"][b.xx, b.yy]) +
-                2 * Math.Abs( objects["traps"][b.xx, b.yy]) +
-                5 * Math.Abs( objects["keys"][b.xx, b.yy]) +
+                2 * Math.Abs(objects["traps"][b.xx, b.yy]) +
+                5 * Math.Abs(objects["keys"][b.xx, b.yy]) +
                5 * Math.Abs(objects["keyItems"][b.xx, b.yy]) +
-               2 * Math.Abs( objects["items"][b.xx, b.yy]) +
-               5 * Math.Abs( objects["puzzles"][b.xx, b.yy]) +
-                2 * Math.Abs( objects["water"][b.xx, b.yy]) +
-                5 * Math.Abs( objects["teleporters"][b.xx, b.yy]) +
-                5 * Math.Abs( objects["enemies"][b.xx, b.yy]));
+               2 * Math.Abs(objects["items"][b.xx, b.yy]) +
+               5 * Math.Abs(objects["puzzles"][b.xx, b.yy]) +
+                2 * Math.Abs(objects["water"][b.xx, b.yy]) +
+                5 * Math.Abs(objects["teleporters"][b.xx, b.yy]) +
+                5 * Math.Abs(objects["enemies"][b.xx, b.yy]));
         }
         public float getBlocked(SearchNode a, SearchNode b) {
             /*
@@ -273,9 +324,9 @@ namespace LearnRooms {
 
                 );
              * */
-            return 1000 * ((float) objects["blocks"][b.xx, b.yy]);
+            return 1000 * ((float)objects["blocks"][b.xx, b.yy]);
         }
-        public List<SearchNode> getPath(SearchNode start, SearchNode end, scoringFunction func) {
+        public List<SearchNode> getPath(SearchNode start, SearchNode end, scoringFunction func,Random rng) {
             List<SearchNode> optimalPath = new List<SearchNode>();
             HashSet<int> closeSet = new HashSet<int>();
             HeapPriorityQueue<SearchNode> openSet = new HeapPriorityQueue<SearchNode>(80000);
@@ -297,7 +348,7 @@ namespace LearnRooms {
                     return optimalPath;
                 }
                 closeSet.Add(current.GetHashCode());
-                foreach (var neighbor in GetNeighbors(current)) {
+                foreach (var neighbor in GetNeighbors(current,rng)) {
                     if (!closeSet.Contains(neighbor.GetHashCode())) {
                         double tentativeGScore = gScore[current.GetHashCode()] + func(current, neighbor);
                         if (!gScore.ContainsKey(neighbor.GetHashCode())) {
@@ -320,7 +371,7 @@ namespace LearnRooms {
 
             return optimalPath;
         }
-        public void changeWidth(int newWidth) {
+        public void changeWidth(int newWidth, Random rng) {
             this.width = newWidth;
             int width = objects["blocks"].GetLength(0);
             int height = objects["blocks"].GetLength(1);
@@ -334,7 +385,7 @@ namespace LearnRooms {
             double[,] newWater = new double[newWidth, height];
             double[,] newTeleporters = new double[newWidth, height];
             int widthDiff = newWidth - width;
-            List<SearchNode> optimalPath = getPath(nodes[width / 2, 0], nodes[width / 2, height-1],getScore);
+            List<SearchNode> optimalPath = getPath(nodes[width / 2, 0], nodes[width / 2, height - 1], getScore, rng);
             SearchNode[] duplicatedPoints = new SearchNode[height];
             foreach (SearchNode node in optimalPath) {
                 if (duplicatedPoints[node.yy] == null) {
@@ -345,14 +396,14 @@ namespace LearnRooms {
                 for (int jj = 0; jj < height; jj++) {
                     if (ii < duplicatedPoints[jj].xx) {
                         newBlock[ii, jj] = objects["blocks"][ii, jj];
-                        newEnemies[ii,jj] =   objects["enemies"][ii,jj];
-                        newKeys[ii,jj] =   objects["keys"][ii,jj];
-                        newKeyItems[ii,jj] =   objects["keyItems"][ii,jj];
-                        newItems[ii,jj] =   objects["items"][ii,jj];
-                        newPuzzles[ii,jj] =   objects["puzzles"][ii,jj];
-                        newTraps[ii,jj] =   objects["traps"][ii,jj];
-                        newWater[ii,jj] =   objects["water"][ii,jj];
-                        newTeleporters[ii,jj] =   objects["teleporters"][ii,jj];
+                        newEnemies[ii, jj] = objects["enemies"][ii, jj];
+                        newKeys[ii, jj] = objects["keys"][ii, jj];
+                        newKeyItems[ii, jj] = objects["keyItems"][ii, jj];
+                        newItems[ii, jj] = objects["items"][ii, jj];
+                        newPuzzles[ii, jj] = objects["puzzles"][ii, jj];
+                        newTraps[ii, jj] = objects["traps"][ii, jj];
+                        newWater[ii, jj] = objects["water"][ii, jj];
+                        newTeleporters[ii, jj] = objects["teleporters"][ii, jj];
                     }
                     else if (ii > duplicatedPoints[jj].xx) {
                         newBlock[ii + widthDiff, jj] = objects["blocks"][ii, jj];
@@ -369,14 +420,14 @@ namespace LearnRooms {
                     else {
                         for (int xx = 0; xx <= widthDiff; xx++) {
                             newBlock[ii + xx, jj] = objects["blocks"][duplicatedPoints[jj].xx, jj];
-                            newEnemies[ii+xx,jj] =   objects["enemies"][duplicatedPoints[jj].xx,jj];
+                            newEnemies[ii + xx, jj] = objects["enemies"][duplicatedPoints[jj].xx, jj];
                             newKeys[ii, jj] = objects["keys"][duplicatedPoints[jj].xx, jj];
-                            newKeyItems[ii+xx,jj] =   objects["keyItems"][duplicatedPoints[jj].xx,jj];
-                            newItems[ii+xx,jj] =   objects["items"][duplicatedPoints[jj].xx,jj];
-                            newPuzzles[ii+xx,jj] =   objects["puzzles"][duplicatedPoints[jj].xx,jj];
-                            newTraps[ii+xx,jj] =   objects["traps"][duplicatedPoints[jj].xx,jj];
-                            newWater[ii+xx,jj] =   objects["water"][duplicatedPoints[jj].xx,jj];
-                            newTeleporters[ii+xx,jj] =   objects["teleporters"][duplicatedPoints[jj].xx,jj];
+                            newKeyItems[ii + xx, jj] = objects["keyItems"][duplicatedPoints[jj].xx, jj];
+                            newItems[ii + xx, jj] = objects["items"][duplicatedPoints[jj].xx, jj];
+                            newPuzzles[ii + xx, jj] = objects["puzzles"][duplicatedPoints[jj].xx, jj];
+                            newTraps[ii + xx, jj] = objects["traps"][duplicatedPoints[jj].xx, jj];
+                            newWater[ii + xx, jj] = objects["water"][duplicatedPoints[jj].xx, jj];
+                            newTeleporters[ii + xx, jj] = objects["teleporters"][duplicatedPoints[jj].xx, jj];
                         }
                     }
                 }
@@ -397,7 +448,7 @@ namespace LearnRooms {
                 }
             }
         }
-        public void changeHeight(int newHeight) {
+        public void changeHeight(int newHeight,Random rng) {
             this.height = newHeight;
             int width = objects["blocks"].GetLength(0);
             int height = objects["blocks"].GetLength(1);
@@ -411,7 +462,7 @@ namespace LearnRooms {
             double[,] newWater = new double[width, newHeight];
             double[,] newTeleporters = new double[width, newHeight];
             int heightDiff = newHeight - height;
-            List<SearchNode> optimalPath = getPath(nodes[0,height/2], nodes[width-1, height/2],getScore);
+            List<SearchNode> optimalPath = getPath(nodes[0, height / 2], nodes[width - 1, height / 2], getScore,rng);
             SearchNode[] duplicatedPoints = new SearchNode[width];
             foreach (SearchNode node in optimalPath) {
                 if (duplicatedPoints[node.xx] == null) {
@@ -432,28 +483,28 @@ namespace LearnRooms {
                         newTeleporters[ii, jj] = objects["teleporters"][ii, jj];
                     }
                     else if (jj > duplicatedPoints[ii].yy) {
-                        newBlock[ii, jj+heightDiff] = objects["blocks"][ii, jj];
-                        newEnemies[ii, jj+heightDiff] = objects["enemies"][ii, jj];
-                        newKeys[ii, jj+heightDiff] = objects["keys"][ii, jj];
-                        newKeyItems[ii, jj+heightDiff] = objects["keyItems"][ii, jj];
-                        newItems[ii, jj+heightDiff] = objects["items"][ii, jj];
-                        newPuzzles[ii, jj+heightDiff] = objects["puzzles"][ii, jj];
-                        newTraps[ii, jj+heightDiff] = objects["traps"][ii, jj];
-                        newWater[ii, jj+heightDiff] = objects["water"][ii, jj];
-                        newTeleporters[ii, jj+heightDiff] = objects["teleporters"][ii, jj];
+                        newBlock[ii, jj + heightDiff] = objects["blocks"][ii, jj];
+                        newEnemies[ii, jj + heightDiff] = objects["enemies"][ii, jj];
+                        newKeys[ii, jj + heightDiff] = objects["keys"][ii, jj];
+                        newKeyItems[ii, jj + heightDiff] = objects["keyItems"][ii, jj];
+                        newItems[ii, jj + heightDiff] = objects["items"][ii, jj];
+                        newPuzzles[ii, jj + heightDiff] = objects["puzzles"][ii, jj];
+                        newTraps[ii, jj + heightDiff] = objects["traps"][ii, jj];
+                        newWater[ii, jj + heightDiff] = objects["water"][ii, jj];
+                        newTeleporters[ii, jj + heightDiff] = objects["teleporters"][ii, jj];
 
                     }
                     else {
                         for (int yy = 0; yy <= heightDiff; yy++) {
-                            newBlock[ii, jj+yy] = objects["blocks"][ii, duplicatedPoints[ii].yy];
-                            newEnemies[ii, jj+yy] = objects["enemies"][ii, duplicatedPoints[ii].yy];
-                            newKeys[ii, jj+yy] = objects["keys"][ii, duplicatedPoints[ii].yy];
-                            newKeyItems[ii, jj+yy] = objects["keyItems"][ii, duplicatedPoints[ii].yy];
-                            newItems[ii, jj+yy] = objects["items"][ii, duplicatedPoints[ii].yy];
-                            newPuzzles[ii, jj+yy] = objects["puzzles"][ii, duplicatedPoints[ii].yy];
-                            newTraps[ii, jj+yy] = objects["traps"][ii, duplicatedPoints[ii].yy];
-                            newWater[ii, jj+yy] = objects["water"][ii, duplicatedPoints[ii].yy];
-                            newTeleporters[ii, jj+yy] = objects["teleporters"][ii, duplicatedPoints[ii].yy];
+                            newBlock[ii, jj + yy] = objects["blocks"][ii, duplicatedPoints[ii].yy];
+                            newEnemies[ii, jj + yy] = objects["enemies"][ii, duplicatedPoints[ii].yy];
+                            newKeys[ii, jj + yy] = objects["keys"][ii, duplicatedPoints[ii].yy];
+                            newKeyItems[ii, jj + yy] = objects["keyItems"][ii, duplicatedPoints[ii].yy];
+                            newItems[ii, jj + yy] = objects["items"][ii, duplicatedPoints[ii].yy];
+                            newPuzzles[ii, jj + yy] = objects["puzzles"][ii, duplicatedPoints[ii].yy];
+                            newTraps[ii, jj + yy] = objects["traps"][ii, duplicatedPoints[ii].yy];
+                            newWater[ii, jj + yy] = objects["water"][ii, duplicatedPoints[ii].yy];
+                            newTeleporters[ii, jj + yy] = objects["teleporters"][ii, duplicatedPoints[ii].yy];
                         }
                     }
                 }
@@ -474,12 +525,12 @@ namespace LearnRooms {
                 }
             }
         }
-        public void changeSize(int width, int height) {
+        public void changeSize(int width, int height,Random rng) {
             for (int newHeight = objects["blocks"].GetLength(1) + 1; newHeight <= height; newHeight++) {
-                changeHeight(newHeight);
+                changeHeight(newHeight,rng);
             }
             for (int newWidth = objects["blocks"].GetLength(0) + 1; newWidth <= width; newWidth++) {
-                changeWidth(newWidth);
+                changeWidth(newWidth, rng);
             }
         }
         public Bitmap toBitmap() {
@@ -523,12 +574,12 @@ namespace LearnRooms {
         public bool isAllZero() {
             for (int ii = 0; ii < objects["blocks"].GetLength(0); ii++) {
                 for (int jj = 0; jj < objects["blocks"].GetLength(1); jj++) {
-                    if (objects["blocks"][ii,jj] != 0 || objects["enemies"][ii,jj] != 0 ||
-                        objects["keys"][ii,jj] != 0 || objects["keyItems"][ii,jj] != 0 ||
-                        objects["items"][ii,jj] != 0 || objects["puzzles"][ii,jj] != 0 ||
-                        objects["traps"][ii,jj] != 0 || objects["water"][ii,jj] != 0 ||
+                    if (objects["blocks"][ii, jj] != 0 || objects["enemies"][ii, jj] != 0 ||
+                        objects["keys"][ii, jj] != 0 || objects["keyItems"][ii, jj] != 0 ||
+                        objects["items"][ii, jj] != 0 || objects["puzzles"][ii, jj] != 0 ||
+                        objects["traps"][ii, jj] != 0 || objects["water"][ii, jj] != 0 ||
                         objects["teleporters"][ii, jj] != 0) {
-                            return false;
+                        return false;
                     }
                 }
             }

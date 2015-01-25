@@ -47,6 +47,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup />
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Infer.Compiler, Version=2.5.30419.0, Culture=neutral, PublicKeyToken=e4813102a62778da, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -58,6 +61,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -65,9 +69,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BayesPointMachine\BPMShared.cs" />
-    <Compile Include="BayesPointMachine\BPMUtils.cs" />
-    <Compile Include="BayesPointMachine\BPM.cs" />
+    <Compile Include="BayesRoom.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="GraphicalModel.cs" />
     <Compile Include="InferFactors.cs" />
@@ -96,6 +98,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
+    <Compile Include="Room.cs" />
     <Compile Include="WetGrassRainSprinkler.cs" />
   </ItemGroup>
   <ItemGroup>

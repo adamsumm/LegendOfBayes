@@ -11,6 +11,7 @@ namespace ZeldaInfer.LevelParse {
     public class Room {
         public List<Door> doors = new List<Door>();
         public int depth = -1;
+        public int pureDepth = -1;
         public int detour = -1;
         public int id;
         public int crossingCount = 0;

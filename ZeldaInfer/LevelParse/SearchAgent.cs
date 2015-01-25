@@ -122,10 +122,12 @@ namespace ZeldaInfer.LevelParse {
             string str = "";
             SearchAgent agent = this;
             while (agent != null) {
+                Console.WriteLine(agent.actualHash);
                 str +=  "(" + agent.bigKey + "," + agent.keyItems + "," + agent.keysAcquired + "," + agent.keysSpent + "," + agent.currentRoom.type + ",";
                 str += ") > \n ";
                 agent = agent.parent;
             }
+            Console.WriteLine();
             /*
             foreach (var agent in agentPath) {
                 str += "(" + agent.bigKey + "," + agent.keyItems + "," + agent.keysAcquired + "," + agent.keysSpent + "," + agent.currentRoom.type + ",";

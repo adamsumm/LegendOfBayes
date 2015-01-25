@@ -34,13 +34,17 @@
   <distanceToDungeonKey>43</distanceToDungeonKey>
   <distanceToSpecialItem>35</distanceToSpecialItem>
   <doorTypesFrom>_;_,_;l;_,_,k,s;_,_,_;_,I,s;_,_,_,s,s;_,_,s,s;_,_,I,s;I,I;_,_,O;I,K;_;_,_,I;k,l;_,_;_,l;_,O;_,s;_,_,I,k;_,_,I,s,s;I;_,_,s;_,_,s,s;_,I,k;I,s;k,k,s;_,s;_,_;_,k,s;_,I,k;_;_,K;I;_,I,s</doorTypesFrom>
+  <doorCameFrom>_;;l;s;;s;;;s;I;;I;;;k;;;O;;;s;I;;;k;s;s;;;s;k;;K;I;s</doorCameFrom>
   <doorTypesTo>_;_,_;l;_,_,k,s;_,_,_;_,I,s;_,_,_,s,s;_,_,s,s;_,_,I,s;I,I;_,_,O;I,K;_;_,_,I;k,l;_,_;_,l;_,O;_,s;_,_,I,k;_,_,I,s,s;I;_,_,s;_,_,s,s;_,I,k;I,s;k,k,s;_,s;_,_;_,k,s;_,I,k;_;_,K;I;_,I,s</doorTypesTo>
+  <doorGoTo>;;_;k;;_;s;s;I;I;O;K;_;;l;;l;;s;I;;_;s;;I;_;k;s;;k;I;_;;_;_</doorGoTo>
   <crossings>1;1;1;2;2;1;2;2;4;1;4;1;1;3;1;1;1;1;1;3;3;0;2;2;1;0;1;0;2;1;1;1;1;0;1</crossings>
   <depth>0;1;16;15;2;43;4;3;24;46;25;47;49;26;33;35;34;36;27;22;23;24;6;5;19;20;18;5;7;20;21;8;48;22;37</depth>
+  <pureDepth>0;1;4;3;2;13;4;3;10;11;11;12;14;12;9;11;10;10;13;8;9;10;6;5;5;6;4;5;7;6;7;8;13;8;9</pureDepth>
   <distanceOfRoomToOptimalPath>0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;1;0;0;0;1;0;1;0;0;0;0;0;1;0</distanceOfRoomToOptimalPath>
-  <neighborTypes>_;e,s;eip;_,e,ekp,ep;_,_,eip;_,e,ep;_,_,eip,ep,i;_,_,e,K;_,e,ep,i;_,ep;_,ep,K;b,i;b;e,K,kp;p,S;ep,p;Ie,m;_,Ie;_,ep;_,ep,m,p;_,_,_,i,S;ep;_,e,ekp;_,ei,ep,i;e,ei,ep;_,ep;eip,ep,i;_,ep;ekp,i;ep,i,p;e,kp,S;ekp;ep,t;p;ep,kp,S</neighborTypes>
   <numberOfNeighbors>1;2;1;4;3;3;5;4;4;2;3;2;1;3;2;2;2;2;2;4;5;1;3;4;3;2;3;2;2;3;3;1;2;1;3</numberOfNeighbors>
   <roomType>s;_;ekp;eip;e;K;_;_;_;i;e;ep;t;ep;m;Ie;p;ep;kp;S;ep;i;i;_;ep;ei;ep;i;ekp;e;p;ekp;b;kp;_</roomType>
+  <roomCameFrom>_;s;eip;_;_;_;_;e;_;_;_;i;b;e;S;p;m;Ie;ep;p;_;ep;_;_;ep;_;i;_;i;i;e;ekp;ep;p;kp</roomCameFrom>
+  <roomGoTo>_;e;_;ep;eip;_;ep;K;i;ep;K;b;_;kp;p;ep;Ie;_;_;_;_;_;e;i;ei;_;ep;ep;ekp;p;kp;_;t;_;_</roomGoTo>
   <enemyNeighbors>0;1;1;3;1;2;2;1;2;1;1;1;1;1;0;1;2;1;1;2;0;1;2;2;3;1;2;1;1;1;1;1;1;0;1</enemyNeighbors>
   <puzzleNeighbors>0;0;1;2;1;1;2;0;1;1;1;0;0;1;1;2;0;0;1;2;0;1;1;1;1;1;2;1;1;2;1;1;1;1;2</puzzleNeighbors>
   <itemNeighbors>0;0;1;1;1;0;2;1;1;0;1;1;0;2;0;0;1;1;0;0;1;0;1;2;1;0;2;0;2;1;1;1;0;0;1</itemNeighbors>

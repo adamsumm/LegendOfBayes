@@ -10,7 +10,6 @@ using MicrosoftResearch.Infer.Distributions;
 using MicrosoftResearch.Infer.Factors;
 
 
-using BayesPointMachine;
 namespace ZeldaInfer {
     class InferTest {
         public static void Test2() {

@@ -34,13 +34,17 @@
   <distanceToDungeonKey>14</distanceToDungeonKey>
   <distanceToSpecialItem>24</distanceToSpecialItem>
   <doorTypesFrom>_,_;_,_,_,_,_,k;_,s;_,l,s;_,l;k,k;k,k;_;_;_,b;_,_,l;_,s;_,l,s;_,K;_,_,s,s,s,s;_,K,s,s,s,s,s;_,s,s;_,k,s,s;_,_,s,s,s,s;_,_,s,s,s;_,_,_,s,s,s;_,_,s,s,s;_,k;_,_,_;_,l;_;_,k;_,k;_,_;_,k;_,_,k;_,b;_,k;_,K;_,K;_;_,b;b;l;_</doorTypesFrom>
+  <doorCameFrom>;;;;;k;k;;;;l;;s;;s;s;s;k;;s;;s;;;;;;k;;k;;;k;;K;;b;b;l;_</doorCameFrom>
   <doorTypesTo>_,_;_,_,_,_,_,k;_,s;_,l,s;_,l;k,k;k,k;_;_;_,b;_,_,l;_,s;_,l,s;_,K;_,_,s,s,s,s;_,K,s,s,s,s,s;_,s,s;_,k,s,s;_,_,s,s,s,s;_,_,s,s,s;_,_,_,s,s,s;_,_,s,s,s;_,k;_,_,_;_,l;_;_,k;_,k;_,_;_,k;_,_,k;_,b;_,k;_,K;_,K;_;_,b;b;l;_</doorTypesTo>
+  <doorGoTo>;k;_;l;l;k;k;_;_;b;;s;l;K;s;;s;s;s;;s;s;k;;l;_;k;;;;k;b;;K;;_;;_;_;</doorGoTo>
   <crossings>1;2;0;2;0;1;1;0;1;1;1;0;1;1;1;1;0;2;2;1;2;1;2;1;0;0;1;1;1;1;2;1;1;1;1;1;1;0;0;1</crossings>
   <depth>1;2;3;3;3;7;8;4;4;22;21;22;24;25;19;26;15;13;11;27;10;14;12;28;29;30;29;9;20;34;31;32;30;35;36;37;23;33;3;0</depth>
+  <pureDepth>1;2;3;3;3;3;4;4;4;10;9;10;12;13;7;14;11;9;7;15;6;10;8;16;17;18;17;5;8;20;19;20;18;21;22;23;11;21;3;0</pureDepth>
   <distanceOfRoomToOptimalPath>0;0;1;0;1;0;0;2;0;0;0;1;0;0;0;0;1;0;0;0;0;0;0;0;1;2;0;0;0;0;0;0;0;0;0;0;0;1;1;0</distanceOfRoomToOptimalPath>
-  <neighborTypes>eip,s;ek,i,ip,ip,p,p;eip,ip;eip,i,ikp;eip,i;eip,kp;eip,ek;p;ip;_,_;_,ei,ip;_,I;_,_,p;I,p;ei,K,p,p,p,p;K,p,p,p,p,p,p;K,p,p;ekp,K,p,p;ekp,K,p,p,p,p;e,p,p,p,p;eip,p,p,p,p,p;p,p,p,p,p;p,p;eip,kp,p;e,ip;eip;e,ip;kp,p;_,p;ep,ip;eikp,eip,ip;_,ep;ep,kp;b,eip;ip,t;b;I,ip;eikp;eip;p</neighborTypes>
   <numberOfNeighbors>2;6;2;3;2;2;2;1;1;2;3;2;3;2;6;7;3;4;6;5;6;5;2;3;2;1;2;2;2;2;3;2;2;2;2;1;2;1;1;1</numberOfNeighbors>
   <roomType>p;eip;i;ip;p;ek;kp;i;ikp;ip;_;_;I;p;p;p;p;p;p;p;p;K;ekp;e;eip;ip;kp;eip;ei;eip;ep;eikp;ip;ip;b;t;_;_;ip;s</roomType>
+  <roomCameFrom>s;p;eip;eip;eip;eip;ek;p;ip;_;ei;_;_;I;K;p;p;ekp;p;p;eip;p;p;p;e;eip;e;kp;p;ep;ip;ep;kp;eip;ip;b;ip;eikp;eip;_</roomCameFrom>
+  <roomGoTo>eip;ek;_;ikp;i;kp;eip;_;_;_;_;I;p;p;p;p;p;p;p;e;p;p;p;eip;ip;_;ip;p;_;ip;eip;_;ep;b;t;_;I;_;_;p</roomGoTo>
   <enemyNeighbors>1;1;1;1;1;1;2;0;0;0;1;0;0;0;1;0;0;1;1;1;1;0;0;1;1;1;1;0;0;1;2;1;1;2;0;1;0;1;1;0</enemyNeighbors>
   <puzzleNeighbors>1;4;2;2;1;2;1;1;1;0;1;0;1;1;4;6;2;3;5;4;6;5;2;3;1;1;1;2;1;2;3;1;2;1;1;0;1;1;1;1</puzzleNeighbors>
   <itemNeighbors>1;4;2;3;2;2;2;0;1;0;2;1;0;1;2;1;1;2;2;0;1;0;0;2;1;1;1;1;0;1;3;0;1;1;1;0;2;1;1;0</itemNeighbors>
